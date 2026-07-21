@@ -1,0 +1,21 @@
+# Logs and temporary databases
+*.log
+*.sqlite
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Dependencies (Never commit these!)
+node_modules/
+vendor/
+.venv/
+
+# Environment variables / Sensitive config files
+.env
+config/local_settings.json
+
+# Build directories
+dist/
+build/
+out/

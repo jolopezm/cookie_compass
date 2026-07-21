@@ -1,0 +1,29 @@
+@import url("./pico/pico.min.css");
+
+body {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+
+  background: #051c27;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+
+  z-index: 1000;
+}
+
+/* visible */
+.sheet.open {
+  transform: translateY(20px);
+}
+
+.sheet-content {
+  padding: 20px;
+}

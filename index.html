@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title></title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <nav>
+      <ul>
+        <li><strong>🧭 COMPASS</strong></li>
+      </ul>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Services</a></li>
+        <li><a href="#">Products</a></li>
+      </ul>
+    </nav>
+
+    <select
+      name="favorite-cuisine"
+      aria-label="Select your favorite cuisine..."
+      required
+      id="selector-tabla"
+    >
+      <option selected disabled value="">Seleccione la tabla a mostrar</option>
+      <option value="clientes">Clientes</option>
+      <option value="productos">Productos</option>
+      <option value="ordenes">Órdenes</option>
+    </select>
+
+    <section id="contenedor-tabla"></section>
+
+    <section id="bottom-sheet" class="sheet">
+      <div class="sheet-header"></div>
+
+      <div class="sheet-content">
+        <h2>Hola 👋</h2>
+        <p>Este es el bottom sheet</p>
+        <button id="btn-cerrar">Cerrar</button>
+      </div>
+    </section>
+
+    <button id="btn-abrir">Abrir</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
