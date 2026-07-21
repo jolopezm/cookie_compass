@@ -1,9 +1,9 @@
 import mostrarTablaSeleccionada from "./utils/mostrarTablaSeleccionada.js";
 import { abrirSheet, cerrarSheet } from "./utils/sheetController.js";
 
-const selector = document.getElementById("selector-tabla");
+const selectorTabla = document.getElementById("selector-tabla");
 
-selector.addEventListener("change", (event) => {
+selectorTabla.addEventListener("change", (event) => {
   mostrarTablaSeleccionada(event.target.value);
 });
 

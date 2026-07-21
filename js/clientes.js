@@ -10,7 +10,12 @@ async function obtenerClientes() {
   }
 
   console.log("Clientes obtenidos: ", data);
-  mostrarClientes(data);
+  localStorage.setItem("clientes", JSON.stringify(data));
+  mostrarClientes(
+    localStorage.getItem("clientes")
+      ? JSON.parse(localStorage.getItem("clientes"))
+      : [],
+  );
 }
 
 function mostrarClientes(clientes) {
