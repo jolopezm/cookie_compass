@@ -21,8 +21,8 @@
     </nav>
 
     <select
-      name="favorite-cuisine"
-      aria-label="Select your favorite cuisine..."
+      name="selector-tabla"
+      aria-label="Seleccionar tabla"
       required
       id="selector-tabla"
     >
@@ -42,7 +42,7 @@
       <div class="sheet-content">
         <h2>Nueva orden</h2>
         <form id="formulario-orden">
-          <label for="cliente">Cliente:</label>
+          <label for="selector-cliente">Cliente:</label>
           <select id="selector-cliente" name="cliente" required></select>
 
           <fieldset>
@@ -50,19 +50,20 @@
             <div id="productos-container"></div>
             <div class="grid">
                 <label>
-                    <input type="checkbox" value="galletas" /> Galletas 🍪
+                    <input type="checkbox" value="galletas" id="checkbox-galleta"/> Galletas 🍪
                 </label>
-                <input type="number" name="number" placeholder="Cantidad" aria-label="Number" value="0">
+                <input type="number" name="number" placeholder="Cantidad" aria-label="Number" value="0" id="cantidad-galleta" disabled>
             </div>
             <div class="grid">
                 <label>
-                    <input type="checkbox" value="queques" /> Queques 🍰
+                    <input type="checkbox" value="queques" id="checkbox-queque"/> Queques 🍰
                 </label>
-                <input type="number" name="number" placeholder="Cantidad" aria-label="Number" value="0">
+                <input type="number" name="number" placeholder="Cantidad" aria-label="Number" value="0" id="cantidad-queque" disabled>
             </div>
+
           </fieldset>
 
-          <button type="submit">Crear orden</button>
+          <button type="submit" id="btn-guardar">Crear orden</button>
       </div>
     </section>
 

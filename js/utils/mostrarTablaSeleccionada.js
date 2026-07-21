@@ -3,38 +3,48 @@ import obtenerProductos from "../productos.js";
 
 async function mostrarTablaSeleccionada(tabla) {
   const contenedor = document.getElementById("contenedor-tabla");
+  contenedor.innerHTML = `
+    <span aria-busy="true">Generating your link...</span>
+  `;
 
-  let archivo;
+  try {
+    let archivo;
 
-  switch (tabla) {
-    case "clientes":
-      archivo = "templates/tabla_clientes.html";
-      break;
+    switch (tabla) {
+      case "clientes":
+        archivo = "templates/tabla_clientes.html";
+        break;
 
-    case "productos":
-      archivo = "templates/tabla_productos.html";
-      break;
+      case "productos":
+        archivo = "templates/tabla_productos.html";
+        break;
 
-    case "ordenes":
-      archivo = "templates/tabla_ordenes.html";
-      break;
+      case "ordenes":
+        archivo = "templates/tabla_ordenes.html";
+        break;
 
-    default:
-      return;
-  }
+      case "":
+        archivo = "templates/contenido_vacio.html";
+        break;
 
-  const respuesta = await fetch(archivo);
-  const html = await respuesta.text();
+      default:
+        return;
+    }
 
-  contenedor.innerHTML = html;
+    const respuesta = await fetch(archivo);
+    const html = await respuesta.text();
 
-  // Ejecutar lógica después de cargar el componente
-  if (tabla === "clientes") {
-    obtenerClientes();
-  }
+    contenedor.innerHTML = html;
 
-  if (tabla === "productos") {
-    obtenerProductos();
+    if (tabla === "clientes") {
+      obtenerClientes();
+    }
+
+    if (tabla === "productos") {
+      obtenerProductos();
+    }
+  } catch (error) {
+    console.error("Error al mostrar la tabla seleccionada:", error);
   }
 }
 

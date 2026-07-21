@@ -1,5 +1,5 @@
 import supabaseClient from "./supabase.js";
-import fechaFormateada from "./utils/fechaFormateada.js";
+import fechaFormateada from "./utils/formatearFecha.js";
 
 async function obtenerClientes() {
   const { data, error } = await supabaseClient.from("clientes").select("*");

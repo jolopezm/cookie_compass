@@ -1,9 +1,8 @@
 import supabaseClient from "./supabase.js";
-import fechaFormateada from "./utils/fechaFormateada.js";
+import formatearFecha from "./utils/formatearFecha.js";
+import formatearPrecio from "./utils/formatearPrecio.js";
 
 async function obtenerProductos() {
-  mostrarLoading(true);
-
   try {
     const { data, error } = await supabaseClient.from("productos").select("*");
 
@@ -12,8 +11,6 @@ async function obtenerProductos() {
     mostrarProductos(data);
   } catch (error) {
     console.error("Error al obtener productos:", error);
-  } finally {
-    mostrarLoading(false);
   }
 }
 
@@ -32,32 +29,13 @@ function mostrarProductos(productos) {
 
     fila.innerHTML = `
       <td>${producto.id}</td>
-      <td>${fechaFormateada(new Date(producto.fecha_registro))}</td>
+      <td>${formatearFecha(new Date(producto.fecha_registro))}</td>
       <td>${producto.nombre}</td>
       <td>${formatearPrecio(producto.precio)}</td>
     `;
 
     tabla.appendChild(fila);
   });
-}
-
-function formatearPrecio(precio) {
-  if (precio === null || precio === undefined) {
-    return "$0.00";
-  }
-
-  return `$${Number(precio).toFixed(2)}`;
-}
-
-function mostrarLoading(loading) {
-  const elemento = document.getElementById("loading");
-
-  if (!elemento) {
-    console.error("No existe el elemento loading");
-    return;
-  }
-
-  elemento.hidden = !loading;
 }
 
 export default obtenerProductos;

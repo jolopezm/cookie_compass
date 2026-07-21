@@ -3,6 +3,10 @@ import { abrirSheet, cerrarSheet } from "./utils/sheetController.js";
 
 const selectorTabla = document.getElementById("selector-tabla");
 
+document.addEventListener("DOMContentLoaded", () => {
+  mostrarTablaSeleccionada(selectorTabla.value);
+});
+
 selectorTabla.addEventListener("change", (event) => {
   mostrarTablaSeleccionada(event.target.value);
 });
