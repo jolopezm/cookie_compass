@@ -1,0 +1,48 @@
+<dialog open>
+  <article>
+    <header>
+      <button aria-label="Close" rel="prev" id="btn-cerrar-modal"></button>
+      <p>
+        <strong>Nuevo producto</strong>
+      </p>
+    </header>
+    <label for="selector-cliente">Cliente:</label>
+    <select id="selector-cliente" name="cliente" required></select>
+    <fieldset>
+      <legend>Productos:</legend>
+      <div id="productos-container"></div>
+      <div class="grid">
+        <label>
+          <input type="checkbox" value="galletas" id="checkbox-galleta" />
+          Galletas 🍪
+        </label>
+        <input
+          type="number"
+          name="number"
+          placeholder="Cantidad"
+          aria-label="Number"
+          value="0"
+          id="cantidad-galleta"
+          disabled
+        />
+      </div>
+      <div class="grid">
+        <label>
+          <input type="checkbox" value="queques" id="checkbox-queque" />
+          Queques 🍰
+        </label>
+        <input
+          type="number"
+          name="number"
+          placeholder="Cantidad"
+          aria-label="Number"
+          value="0"
+          id="cantidad-queque"
+          disabled
+        />
+      </div>
+    </fieldset>
+
+    <button type="submit" id="btn-guardar">Guardar</button>
+  </article>
+</dialog>

@@ -1,5 +1,7 @@
-export function abrirSheet() {
-  const sheet = document.getElementById("bottom-sheet");
+import supabaseClient from "../supabase.js";
+/*
+export function abrirSheet(id) {
+  const sheet = document.getElementById(id);
 
   if (!sheet) {
     console.error("No existe bottom-sheet");
@@ -61,28 +63,106 @@ checkboxQueque.addEventListener("change", () => {
 });
 
 const btnGuardar = document.getElementById("btn-guardar");
-btnGuardar.addEventListener("click", () => {
-  const form = document.getElementById("formulario-orden");
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
+const datosOrden = {
+  id_cliente: null,
+  total: 0,
+};
 
-    const cliente = document.getElementById("selector-cliente");
-    const clienteSeleccionado = cliente.value;
-    const cantidadGalleta = parseInt(inputCantidadGalleta.value, 10) || 0;
-    const cantidadQueque = parseInt(inputCantidadQueque.value, 10) || 0;
+const item = {
+  id_orden: null,
+  id_producto: null,
+  cantidad: 0,
+  precio_unitario: 0,
+};
 
-    const datosOrden = {
-      cliente: clienteSeleccionado,
-      galletas: checkboxGalleta.checked ? cantidadGalleta : 0,
-      queques: checkboxQueque.checked ? cantidadQueque : 0,
-    };
+const detalleOrden = [];
+const form = document.getElementById("formulario-orden");
 
-    guardarOrden(datosOrden);
-  });
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const cliente = document.getElementById("selector-cliente");
+  const nombreCliente = cliente.value;
+  const idCliente = buscarIdClientePorNombre(nombreCliente);
+
+  const cantidadGalleta = parseInt(inputCantidadGalleta.value, 10) || 0;
+  const cantidadQueque = parseInt(inputCantidadQueque.value, 10) || 0;
+
+  datosOrden.id_cliente = idCliente;
+  datosOrden.total =
+    calcularTotal(cantidadGalleta, 5) + calcularTotal(cantidadQueque, 10);
+
+  guardarOrden(datosOrden)
+    .then((response) => {
+      console.log("Orden guardada:", response);
+      item.id_orden = response.id;
+      if (cantidadGalleta > 0) {
+        item.id_producto = 1; // ID del producto Galleta
+        item.cantidad = cantidadGalleta;
+        item.precio_unitario = 5;
+        detalleOrden.push({ ...item });
+      }
+
+      if (cantidadQueque > 0) {
+        item.id_producto = 2; // ID del producto Queque
+        item.cantidad = cantidadQueque;
+        item.precio_unitario = 10;
+        detalleOrden.push({ ...item });
+      }
+
+      detalleOrden.forEach((detalle) => {
+        guardarDetalleOrden(detalle);
+      });
+
+      cerrarSheet();
+    })
+    .catch((error) => {
+      console.error("Error al guardar la orden:", error);
+    });
 });
 
-function guardarOrden(datos) {
-  // Aquí iría la lógica para guardar la orden, por ejemplo, en localStorage o en una base de datos
-  console.log("Guardando orden:", datos);
+function buscarIdClientePorNombre(nombre) {
+  const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+  const clienteEncontrado = clientes.find(
+    (cliente) => cliente.nombre === nombre,
+  );
+  return clienteEncontrado ? clienteEncontrado.id : null;
 }
+
+async function guardarOrden(datos) {
+  try {
+    const { data, error } = await supabaseClient
+      .from("ordenes")
+      .insert([datos])
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+function calcularTotal(cantidad, precio) {
+  return cantidad * precio;
+}
+
+async function guardarDetalleOrden(datos) {
+  try {
+    console.log("Guardando detalle de orden:", datos);
+    const { data, error } = await supabaseClient
+      .from("detalle_ordenes")
+      .insert([datos]);
+
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+*/

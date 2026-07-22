@@ -8,13 +8,29 @@ async function obtenerProductos() {
 
     if (error) throw error;
 
-    mostrarProductos(data);
+    localStorage.setItem("productos", JSON.stringify(data));
   } catch (error) {
     console.error("Error al obtener productos:", error);
   }
 }
 
-function mostrarProductos(productos) {
+async function guardarProducto(datos) {
+  try {
+    const { data, error } = await supabaseClient
+      .from("productos")
+      .insert([datos]);
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error("Error al guardar producto:", error);
+    throw error;
+  }
+}
+
+function mostrarProductos() {
+  const productos = JSON.parse(localStorage.getItem("productos")) || [];
   const tabla = document.getElementById("tabla-productos");
 
   if (!tabla) {
@@ -38,4 +54,4 @@ function mostrarProductos(productos) {
   });
 }
 
-export default obtenerProductos;
+export { obtenerProductos, guardarProducto, mostrarProductos };

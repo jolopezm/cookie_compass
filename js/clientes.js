@@ -11,14 +11,25 @@ async function obtenerClientes() {
 
   console.log("Clientes obtenidos: ", data);
   localStorage.setItem("clientes", JSON.stringify(data));
-  mostrarClientes(
-    localStorage.getItem("clientes")
-      ? JSON.parse(localStorage.getItem("clientes"))
-      : [],
-  );
 }
 
-function mostrarClientes(clientes) {
+async function guardarCliente(datos) {
+  try {
+    const { data, error } = await supabaseClient
+      .from("clientes")
+      .insert([datos]);
+
+    if (error) {
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+function mostrarClientes() {
+  const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
   const tabla = document.getElementById("tabla-clientes");
 
   clientes.forEach((cliente) => {
@@ -34,4 +45,4 @@ function mostrarClientes(clientes) {
   });
 }
 
-export default obtenerClientes;
+export { obtenerClientes, guardarCliente, mostrarClientes };

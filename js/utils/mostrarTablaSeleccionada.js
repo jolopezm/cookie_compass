@@ -1,5 +1,5 @@
-import obtenerClientes from "../clientes.js";
-import obtenerProductos from "../productos.js";
+import { mostrarClientes } from "../clientes.js";
+import { mostrarProductos } from "../productos.js";
 
 async function mostrarTablaSeleccionada(tabla) {
   const contenedor = document.getElementById("contenedor-tabla");
@@ -37,11 +37,11 @@ async function mostrarTablaSeleccionada(tabla) {
     contenedor.innerHTML = html;
 
     if (tabla === "clientes") {
-      obtenerClientes();
+      mostrarClientes();
     }
 
     if (tabla === "productos") {
-      obtenerProductos();
+      mostrarProductos();
     }
   } catch (error) {
     console.error("Error al mostrar la tabla seleccionada:", error);
