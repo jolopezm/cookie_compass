@@ -1,5 +1,6 @@
 import { mostrarClientes } from "../clientes.js";
 import { mostrarProductos } from "../productos.js";
+import { mostrarOrdenes } from "../ordenes.js";
 
 async function mostrarTablaSeleccionada(tabla) {
   const contenedor = document.getElementById("contenedor-tabla");
@@ -42,6 +43,10 @@ async function mostrarTablaSeleccionada(tabla) {
 
     if (tabla === "productos") {
       mostrarProductos();
+    }
+
+    if (tabla === "ordenes") {
+      await mostrarOrdenes();
     }
   } catch (error) {
     console.error("Error al mostrar la tabla seleccionada:", error);
