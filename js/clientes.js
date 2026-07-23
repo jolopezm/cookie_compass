@@ -1,4 +1,3 @@
-import supabaseClient from "./supabase.js";
 import fechaFormateada from "./utils/formatearFecha.js";
 
 async function obtenerClientes() {

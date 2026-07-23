@@ -1,4 +1,4 @@
-import supabaseClient from "./supabase.js";
+import { supabaseClient } from "./supabase.js";
 
 async function obtenerOrdenes() {
   try {
@@ -13,6 +13,36 @@ async function obtenerOrdenes() {
     console.log("Ordenes obtenidas: ", data);
   } catch (error) {
     console.error("Error al obtener ordenes:", error);
+  }
+}
+
+async function guardarOrden(datos) {
+  try {
+    const { data, error } = await supabaseClient
+      .from("ordenes")
+      .insert([datos]);
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error("Error al guardar orden:", error);
+    throw error;
+  }
+}
+
+async function guardarDetalleOrden(datos) {
+  try {
+    const { data, error } = await supabaseClient
+      .from("detalle_ordenes")
+      .insert([datos]);
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error("Error al guardar detalle de orden:", error);
+    throw error;
   }
 }
 
@@ -40,4 +70,39 @@ async function mostrarOrdenes() {
   tbody.innerHTML = html;
 }
 
-export { obtenerOrdenes, mostrarOrdenes };
+async function initFormOrdenes() {
+  try {
+    const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    const selectorCliente = document.getElementById("selector-cliente");
+
+    clientes.forEach((cliente) => {
+      const option = document.createElement("option");
+      option.value = cliente.id;
+      option.textContent = cliente.nombre;
+      selectorCliente.appendChild(option);
+    });
+
+    toggleInput("checkbox-galletas", "input-cantidad-galleta");
+    toggleInput("checkbox-queques", "input-cantidad-queque");
+  } catch (error) {
+    console.error("Error al inicializar el formulario de ordenes:", error);
+  }
+}
+
+function toggleInput(checkboxId, inputId) {
+  const checkbox = document.getElementById(checkboxId);
+  const input = document.getElementById(inputId);
+
+  if (!checkbox || !input) return;
+
+  checkbox.addEventListener("change", () => {
+    input.disabled = !checkbox.checked;
+  });
+}
+export {
+  obtenerOrdenes,
+  guardarOrden,
+  guardarDetalleOrden,
+  mostrarOrdenes,
+  initFormOrdenes,
+};

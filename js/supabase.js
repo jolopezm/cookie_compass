@@ -4,4 +4,77 @@ const supabasekey =
 
 const supabaseClient = supabase.createClient(supabaseUrl, supabasekey);
 
-export default supabaseClient;
+async function fetchRecords(tableName) {
+  const { data: fetchedRecords, error } = await supabaseClient
+    .from(tableName)
+    .select("*");
+
+  if (error) {
+    throw error;
+  }
+  return fetchedRecords;
+}
+
+async function createRecord(payload, tableName) {
+  const { data: insertedRecord, error } = await supabaseClient
+    .from(tableName)
+    .insert([payload])
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+  return insertedRecord;
+}
+
+async function updateRecord(id, payload, tableName) {
+  const { data: updatedRecord, error } = await supabaseClient
+    .from(tableName)
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+  return updatedRecord;
+}
+
+async function deleteRecord(id, tableName) {
+  const { data: deletedRecord, error } = await supabaseClient
+    .from(tableName)
+    .delete()
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+  return deletedRecord;
+}
+
+async function fetchTables() {
+  const tables = ["clientes", "productos", "ordenes"];
+  for (const table of tables) {
+    try {
+      const records = await fetchRecords(table);
+      localStorage.setItem(table, JSON.stringify(records));
+
+      // guardamos el orden de las tablas
+      localStorage.setItem("tables", JSON.stringify(tables));
+    } catch (error) {
+      console.error(`Error fetching records from ${table}:`, error);
+    }
+  }
+}
+
+export {
+  supabaseClient,
+  createRecord,
+  fetchTables,
+  updateRecord,
+  deleteRecord,
+};

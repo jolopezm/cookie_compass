@@ -1,4 +1,4 @@
-import supabaseClient from "./supabase.js";
+import { supabaseClient } from "./supabase.js";
 import formatearFecha from "./utils/formatearFecha.js";
 import formatearPrecio from "./utils/formatearPrecio.js";
 

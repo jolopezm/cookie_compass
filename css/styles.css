@@ -5,44 +5,24 @@ body {
   padding-right: 20px;
 }
 
-.sheet {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100vh;
-
-  background: #051c27;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
-
-  z-index: 1000;
+table {
+  overflow: auto;
 }
 
-/* visible */
-.sheet.open {
-  transform: translateY(20px);
+th {
+  background-color: #0172ad;
+  color: white;
 }
 
-.sheet-content {
-  padding: 20px;
+th:first-child {
+  border-top-left-radius: 3px;
 }
 
-.close-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+th:last-child {
+  border-top-right-radius: 3px;
+}
 
-  width: 36px;
-  height: 36px;
-
-  border-radius: 50%;
-  border: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 18px;
-  cursor: pointer;
+#contenedor-tabla {
+  border: 1px solid #0172ad;
+  border-radius: 5px;
 }
