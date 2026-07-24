@@ -57,7 +57,7 @@ async function deleteRecord(id, tableName) {
 }
 
 async function fetchTables() {
-  const tables = ["clientes", "productos", "ordenes"];
+  const tables = ["clientes", "productos", "ordenes", "detalle_ordenes"];
   for (const table of tables) {
     try {
       const records = await fetchRecords(table);

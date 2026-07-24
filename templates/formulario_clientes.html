@@ -2,14 +2,17 @@
   <article>
     <header>
       <button aria-label="Close" rel="prev" id="btn-cerrar-modal"></button>
+
       <p>
         <strong>Nuevo cliente</strong>
       </p>
     </header>
 
-    <label for="nombre">Nombre:</label>
-    <input type="text" id="input-nombre" name="nombre" required />
+    <form id="form">
+      <label>Nombre:</label>
+      <input type="text" id="input-nombre" name="nombre" required />
 
-    <button type="submit" id="btn-guardar">Guardar</button>
+      <input type="submit" id="btn-guardar" value="Guardar"></input>
+    </form>
   </article>
 </dialog>

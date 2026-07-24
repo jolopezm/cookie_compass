@@ -14,15 +14,45 @@ th {
   color: white;
 }
 
-th:first-child {
-  border-top-left-radius: 3px;
-}
-
-th:last-child {
-  border-top-right-radius: 3px;
+#table-editor {
+  border: 2px solid #0172ad;
+  border-radius: 5px;
+  padding: 0;
 }
 
 #contenedor-tabla {
-  border: 1px solid #0172ad;
-  border-radius: 5px;
+  overflow: auto;
+  display: block;
+  height: 300px;
+  margin-top: 0;
+}
+
+#table-controls {
+  margin: 0;
+}
+
+#table-controls button {
+  padding: 5px 10px;
+  border-radius: 0;
+  color: white;
+}
+
+#table-controls select {
+  padding: 5px 10px;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 0;
+  border-right: none;
+}
+
+#btn-add-record {
+  background-color: #0172ad;
+  border-top-right-radius: 4px;
+}
+
+/* position sticky para los checkboxes select */
+th:first-child,
+td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
 }

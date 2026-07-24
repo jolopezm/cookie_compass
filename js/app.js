@@ -1,14 +1,12 @@
-import mostrarTablaSeleccionada from "./utils/mostrarTablaSeleccionada.js";
 import { showSelectedTable } from "./tableManager.js";
-import { obtenerClientes, guardarCliente } from "./clientes.js";
-import { obtenerProductos, guardarProducto } from "./productos.js";
+import { openFormMenu, openForm } from "./formManager.js";
 import {
   initFormOrdenes,
   guardarOrden,
   guardarDetalleOrden,
 } from "./ordenes.js";
 
-import { fetchTables } from "./supabase.js";
+import { fetchTables, createRecord, deleteRecord } from "./supabase.js";
 
 const tableSelector = document.getElementById("selector-tabla");
 
@@ -26,8 +24,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const tableName = tableSelector.value;
   const table = JSON.parse(localStorage.getItem(tableName)) || [];
-  const tableContainer = document.getElementById("contenedor-tabla");
-  tableContainer.innerHTML = showSelectedTable(table);
+  const container = document.getElementById("contenedor-tabla");
+  container.innerHTML = showSelectedTable(table);
+
+  const selectAllCheckbox = document.getElementById("select-all");
+  let checkboxes = [];
+  selectAllCheckbox.addEventListener("change", (event) => {
+    checkboxes = document.querySelectorAll("input[type='checkbox']");
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = event.target.checked;
+    });
+  });
+
+  const deleteRecordButton = document.getElementById("btn-detele-record");
+  deleteRecordButton.addEventListener("click", async () => {
+    const tableName = tableSelector.value;
+
+    for (const checkbox of checkboxes) {
+      const row = checkbox.closest("tr");
+      const recordId = row.cells[1].textContent;
+
+      try {
+        await deleteRecord(recordId, tableName);
+        row.remove();
+      } catch (error) {
+        console.error("Error al eliminar el registro:", error);
+      }
+    }
+  });
+
+  const addRecordButton = document.getElementById("btn-add-record");
+  addRecordButton.addEventListener("click", async () => {
+    await openFormMenu();
+  });
 });
 
 tableSelector.addEventListener("change", (event) => {
@@ -41,115 +70,82 @@ tableSelector.addEventListener("change", (event) => {
   }
 });
 
-async function abrirFormulario(tabla) {
-  const contenedor = document.getElementById("modal-container");
+document.addEventListener("click", async (event) => {
+  if (event.target.id === "btn-abrir-formulario") {
+    const container = document.getElementById("modal-container");
+    const tableName = event.target.value;
+    const html = await openForm(tableName);
 
-  try {
-    switch (tabla) {
-      case "clientes":
-        contenedor.innerHTML = await fetch(
-          "../templates/formulario_clientes.html",
-        ).then((res) => res.text());
-        break;
-
-      case "productos":
-        contenedor.innerHTML = await fetch(
-          "../templates/formulario_productos.html",
-        ).then((res) => res.text());
-        break;
-
-      case "ordenes":
-        contenedor.innerHTML = await fetch(
-          "../templates/formulario_ordenes.html",
-        ).then((res) => res.text());
-        break;
-
-      default:
-        throw new Error("Tabla no válida");
-    }
-  } catch (error) {
-    console.error("Error al abrir el formulario:", error);
-  }
-
-  document.getElementById("btn-cerrar-modal").addEventListener("click", () => {
-    const contenedor = document.getElementById("modal-container");
-    contenedor.innerHTML = "";
-  });
-}
-
-document
-  .getElementById("btn-abrir-nuevo-cliente")
-  .addEventListener("click", async () => {
-    await abrirFormulario("clientes");
+    container.innerHTML = html;
 
     document
-      .getElementById("btn-guardar")
-      .addEventListener("click", async () => {
-        const nombre = document.getElementById("input-nombre").value;
-
-        try {
-          await guardarCliente({ nombre });
-          await abrirFormulario("clientes");
-          await obtenerClientes();
-        } catch (error) {
-          console.error("Error al guardar cliente:", error);
-        }
+      .getElementById("btn-cerrar-modal")
+      .addEventListener("click", () => {
+        container.innerHTML = "";
       });
-  });
 
-document
-  .getElementById("btn-abrir-nuevo-producto")
-  .addEventListener("click", async () => {
-    await abrirFormulario("productos");
-
-    document
-      .getElementById("btn-guardar")
-      .addEventListener("click", async () => {
-        const nombre = document.getElementById("input-nombre").value;
-        const precio = parseFloat(
-          document.getElementById("input-precio").value,
-        );
-
-        try {
-          await guardarProducto({ nombre, precio });
-          await abrirFormulario("productos");
-          await obtenerProductos();
-        } catch (error) {
-          console.error("Error al guardar producto:", error);
-        }
+    if (tableName === "ordenes") {
+      const selector = document.getElementById("selector-cliente");
+      const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+      clientes.forEach((cliente) => {
+        const option = document.createElement("option");
+        option.value = cliente.id;
+        option.textContent = cliente.nombre;
+        selector.appendChild(option);
       });
-  });
 
-document
-  .getElementById("btn-abrir-nueva-orden")
-  .addEventListener("click", async () => {
-    await abrirFormulario("ordenes");
-    await new Promise((resolve) => setTimeout(resolve, 0));
+      const checkboxGalletas = document.getElementById("checkbox-galletas");
+      const inputCantidadGalletas =
+        document.getElementById("cantidad-galletas");
+      checkboxGalletas.addEventListener("change", () => {
+        inputCantidadGalletas.disabled = !checkboxGalletas.checked;
+      });
 
-    await initFormOrdenes();
+      const checkboxQueques = document.getElementById("checkbox-queques");
+      const inputCantidadQueques = document.getElementById("cantidad-queques");
+      let productIdList = [];
+      checkboxQueques.addEventListener("change", () => {
+        inputCantidadQueques.disabled = !checkboxQueques.checked;
+      });
 
-    document
-      .getElementById("btn-guardar")
-      .addEventListener("click", async () => {
-        const cliente = document.getElementById("selector-cliente").value;
-        const cantidadGalleta = parseInt(
-          document.getElementById("input-cantidad-galleta").value,
-          10,
-        );
-        const cantidadQueque = parseInt(
-          document.getElementById("input-cantidad-queque").value,
-          10,
-        );
+      document.getElementById("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id_cliente = document.getElementById("selector-cliente").value;
 
         try {
-          await guardarOrden({
-            cliente,
-            cantidadGalleta,
-            cantidadQueque,
-          });
-          await abrirFormulario("ordenes");
+          console.log("productId", productId);
+          //await createRecord({ cliente, galletas, queques }, tableName);
+          //container.innerHTML = "";
+          //await fetchTables();
+          //const table = JSON.parse(localStorage.getItem(tableName)) || [];
+          //const tableContainer = document.getElementById("contenedor-tabla");
+          //tableContainer.innerHTML = showSelectedTable(table);
         } catch (error) {
           console.error("Error al guardar orden:", error);
         }
       });
-  });
+    }
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById("input-nombre").value;
+
+      try {
+        await createRecord({ nombre }, tableName);
+        container.innerHTML = "";
+        await fetchTables();
+        const table = JSON.parse(localStorage.getItem(tableName)) || [];
+        const tableContainer = document.getElementById("contenedor-tabla");
+        tableContainer.innerHTML = showSelectedTable(table);
+      } catch (error) {
+        console.error("Error al guardar cliente:", error);
+      }
+    });
+  }
+});
+
+function getProductIdByName(productName) {
+  const products = JSON.parse(localStorage.getItem("productos")) || [];
+  const product = products.find((p) => p.nombre === productName);
+  return product ? product.id : null;
+}
