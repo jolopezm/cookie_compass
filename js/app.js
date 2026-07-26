@@ -103,49 +103,83 @@ document.addEventListener("click", async (event) => {
 
       const checkboxQueques = document.getElementById("checkbox-queques");
       const inputCantidadQueques = document.getElementById("cantidad-queques");
-      let productIdList = [];
+
       checkboxQueques.addEventListener("change", () => {
         inputCantidadQueques.disabled = !checkboxQueques.checked;
       });
 
       document.getElementById("form").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const id_cliente = document.getElementById("selector-cliente").value;
+
+        const ordenData = {
+          total: 0, //suma del cantidad por precio unitario de cada detalle
+          id_cliente: document.getElementById("selector-cliente").value,
+        };
+
+        const detalleList = [];
+
+        const detalleData = {
+          id_orden: null, //id de la orden que recien se creo
+          id_producto: null, //id del producto seleccionado (galletas o queques)
+          cantidad: 0, //cantidad ingresada en el formulario
+          precio_unitario: 0, //precio unitario del producto seleccionado
+        };
+
+        if (checkboxGalletas.checked) {
+          const cantidadGalletas = parseInt(inputCantidadGalletas.value);
+          const idProductoGalletas = getProductInfoByName("galleta").id;
+          const precioUnitarioGalletas = getProductInfoByName("galleta").precio;
+
+          detalleList.push({
+            ...detalleData,
+            id_producto: idProductoGalletas,
+            cantidad: cantidadGalletas,
+            precio_unitario: precioUnitarioGalletas,
+          });
+
+          ordenData.total += cantidadGalletas * precioUnitarioGalletas;
+        }
+
+        if (checkboxQueques.checked) {
+          const cantidadQueques = parseInt(inputCantidadQueques.value);
+          const idProductoQueques = getProductInfoByName("queque").id;
+          const precioUnitarioQueques = getProductInfoByName("queque").precio;
+
+          detalleList.push({
+            ...detalleData,
+            id_producto: idProductoQueques,
+            cantidad: cantidadQueques,
+            precio_unitario: precioUnitarioQueques,
+          });
+
+          ordenData.total += cantidadQueques * precioUnitarioQueques;
+        }
 
         try {
-          console.log("productId", productId);
-          //await createRecord({ cliente, galletas, queques }, tableName);
-          //container.innerHTML = "";
-          //await fetchTables();
-          //const table = JSON.parse(localStorage.getItem(tableName)) || [];
-          //const tableContainer = document.getElementById("contenedor-tabla");
-          //tableContainer.innerHTML = showSelectedTable(table);
+          console.log("Orden a subir: ", ordenData);
+          const ordenCreada = await createRecord(ordenData, tableName);
+          const idOrdenCreada = ordenCreada.id;
+
+          for (const detalle of detalleList) {
+            detalle.id_orden = idOrdenCreada;
+            console.log("Detalle a subir: ", detalle);
+            await createRecord(detalle, "detalle_ordenes");
+          }
+
+          container.innerHTML = "";
+          await fetchTables();
+          const table = JSON.parse(localStorage.getItem("ordenes")) || [];
+          const tableContainer = document.getElementById("contenedor-tabla");
+          tableContainer.innerHTML = showSelectedTable(table);
         } catch (error) {
-          console.error("Error al guardar orden:", error);
+          console.error("Error al guardar la orden y sus detalles:", error);
         }
       });
     }
-
-    document.getElementById("form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const nombre = document.getElementById("input-nombre").value;
-
-      try {
-        await createRecord({ nombre }, tableName);
-        container.innerHTML = "";
-        await fetchTables();
-        const table = JSON.parse(localStorage.getItem(tableName)) || [];
-        const tableContainer = document.getElementById("contenedor-tabla");
-        tableContainer.innerHTML = showSelectedTable(table);
-      } catch (error) {
-        console.error("Error al guardar cliente:", error);
-      }
-    });
   }
 });
 
-function getProductIdByName(productName) {
-  const products = JSON.parse(localStorage.getItem("productos")) || [];
-  const product = products.find((p) => p.nombre === productName);
-  return product ? product.id : null;
+function getProductInfoByName(productName) {
+  const productos = JSON.parse(localStorage.getItem("productos")) || [];
+  return productos.find((p) => p.nombre.toLowerCase() === productName);
 }

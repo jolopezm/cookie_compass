@@ -6,7 +6,7 @@ function formatColumnHeaders(headers) {
 
     if (
       headers[i].toLowerCase().includes("precio") ||
-      headers[i].toLowerCase() === "total"
+      headers[i].toLowerCase().includes("total")
     ) {
       headers[i] += " ($)";
     }

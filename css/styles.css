@@ -25,6 +25,7 @@ th {
   display: block;
   height: 300px;
   margin-top: 0;
+  font-size: 14px;
 }
 
 #table-controls {
