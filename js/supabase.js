@@ -72,7 +72,9 @@ async function fetchTables() {
       // guardamos el orden de las tablas
       localStorage.setItem("tables", JSON.stringify(tables));
     } catch (error) {
-      console.error(`Error fetching records from ${table}:`, error);
+      throw new Error(
+        `Error al obtener los registros de la tabla ${table}: ${error.message}`,
+      );
     }
   }
 }

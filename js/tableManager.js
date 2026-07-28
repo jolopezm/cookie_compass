@@ -1,4 +1,4 @@
-function formatColumnHeaders(headers) {
+function formatHeaders(headers) {
   for (let i = 0; i < headers.length; i++) {
     headers[i] = headers[i]
       .replace(/_/g, " ")
@@ -25,63 +25,44 @@ function formatPrice(price) {
     return "0.00";
   }
 
-  return `${Number(price).toFixed(2)}`;
+  return parseFloat(price).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
-function formatTableData(tableData) {
-  let formattedData = [];
-  if (tableData.length > 0) {
-    const headers = Object.keys(tableData[0]);
-    const formattedHeaders = formatColumnHeaders(headers);
-    formattedData.push(formattedHeaders);
+function formatRow(key, value) {
+  const formatted = {};
 
-    //iteremos por cada fila de la tabla y formateemos los valores según el encabezado
-    tableData.forEach((row) => {
-      const formattedRow = Object.values(row).map((value, index) => {
-        const header = formattedHeaders[index];
-        if (header.includes("$")) {
-          return formatPrice(value);
-        }
-        if (header.toLowerCase() === "fecha registro") {
-          return formatDate(new Date(value));
-        }
-        return value;
-      });
-      formattedData.push(formattedRow);
-    });
+  if (key.toLowerCase().includes("fecha")) {
+    const date = new Date(value);
+    formatted[key] = formatDate(date);
+  } else if (
+    key.toLowerCase().includes("precio") ||
+    key.toLowerCase().includes("total")
+  ) {
+    formatted[key] = formatPrice(value);
+  } else {
+    formatted[key] = value;
   }
+
+  return formatted;
+}
+
+function formatTableData(data) {
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  const formattedData = data.map((row) => {
+    const formattedRow = {};
+    for (const key in row) {
+      Object.assign(formattedRow, formatRow(key, row[key]));
+    }
+    return formattedRow;
+  });
 
   return formattedData;
 }
 
-function showSelectedTable(table) {
-  const data = formatTableData(table);
-
-  let html = "";
-  if (data.length > 0) {
-    html += "<table class='striped'>";
-    html += "<thead><tr>";
-    html += "<th><input type='checkbox' id='select-all' /></th>";
-    data[0].forEach((header) => {
-      html += `<th>${header}</th>`;
-    });
-    html += "</tr></thead>";
-    html += "<tbody>";
-    for (let i = 1; i < data.length; i++) {
-      html += "<tr>";
-      html += `<td><input type='checkbox' /></td>`;
-      data[i].forEach((cell) => {
-        html += `<td>${cell}</td>`;
-      });
-      html += "</tr>";
-    }
-    html += "</tbody>";
-    html += "</table>";
-  } else {
-    html = "<p>No hay datos disponibles para esta tabla.</p>";
-  }
-
-  return html;
-}
-
-export { showSelectedTable };
+export { formatTableData };

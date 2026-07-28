@@ -1,4 +1,4 @@
-@import url("./pico/pico.min.css");
+@import url("pico/pico.min.css");
 
 body {
   padding-left: 20px;
@@ -12,6 +12,9 @@ table {
 th {
   background-color: #0172ad;
   color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 #table-editor {
@@ -20,7 +23,7 @@ th {
   padding: 0;
 }
 
-#contenedor-tabla {
+#table-container {
   overflow: auto;
   display: block;
   height: 300px;
@@ -48,12 +51,4 @@ th {
 #btn-add-record {
   background-color: #0172ad;
   border-top-right-radius: 4px;
-}
-
-/* position sticky para los checkboxes select */
-th:first-child,
-td:first-child {
-  position: sticky;
-  left: 0;
-  z-index: 1;
 }
