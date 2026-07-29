@@ -1,70 +1,61 @@
-import { BaseComponent } from "../components/baseComponent.js";
 import { formatTableData } from "./tableManager.js";
-import { fetchTables } from "./supabase.js";
+import { fetchTables, createRecord } from "./supabase.js";
 import "../components/dataTable.js";
 import "../components/tableOptionsMenu.js";
 import "../components/modalNewRecord.js";
 
-// =====================
-// 🎨 CARGAR ESTILOS
-// =====================
-async function cargarEstilos() {
-  try {
-    const sheet = new CSSStyleSheet();
-    const response = await fetch("/css/pico/pico.min.css");
-    const text = await response.text();
-
-    await sheet.replace(text);
-
-    BaseComponent.globalStyles = [sheet];
-
-    console.log("✅ estilos listos");
-  } catch (e) {
-    console.error("❌ error cargando estilos", e);
-  }
-}
+let currentSelectedTable = "";
 
 // =====================
 // 🚀 INIT APP
 // =====================
 document.addEventListener("DOMContentLoaded", async () => {
-  await cargarEstilos();
-
   const tableSelector = document.getElementById("table-selector");
   const container = document.getElementById("table-container");
 
   if (!tableSelector || !container) {
-    console.error("❌ Faltan elementos en el DOM");
+    console.error("❌ Faltan elementos clave en el DOM");
     return;
   }
 
-  // 1. cargar tablas desde supabase/localStorage
-  const firstTable = await initTables(tableSelector);
+  // 1. Cargar tablas desde Supabase / localStorage
+  currentSelectedTable = await initTables(tableSelector);
 
-  // 2. render inicial
-  await loadTable(firstTable);
+  // 2. Render inicial
+  if (currentSelectedTable) {
+    await loadTable(currentSelectedTable);
+  }
 
-  // 3. eventos
+  // 3. Configurar eventos
   setupTableSelector(tableSelector);
-
-  // 4. menu acciones
   setupActionMenu();
+  setupModalEvents();
 });
 
 // =====================
 // 📦 INIT TABLES
 // =====================
 async function initTables(selectElement) {
-  await fetchTables();
+  try {
+    await fetchTables();
+  } catch (err) {
+    console.warn("⚠️ No se pudo sincronizar con Supabase, usando datos en caché.", err);
+  }
 
-  const tables = JSON.parse(localStorage.getItem("tables")) || [];
+  const tables = JSON.parse(localStorage.getItem("tables")) || [
+    "clientes",
+    "productos",
+    "ordenes",
+    "detalle_ordenes",
+    "vista_ventas",
+  ];
 
   selectElement.innerHTML = "";
 
   tables.forEach((table) => {
     const option = document.createElement("option");
     option.value = table;
-    option.textContent = table;
+    option.textContent = table.charAt(0).toUpperCase() + table.slice(1).replace(/_/g, " ");
     selectElement.appendChild(option);
   });
 
@@ -74,12 +65,13 @@ async function initTables(selectElement) {
 // =====================
 // 📊 LOAD TABLE
 // =====================
-async function loadTable(tableName) {
+function loadTable(tableName) {
+  currentSelectedTable = tableName;
+
   const rawData = JSON.parse(localStorage.getItem(tableName)) || [];
   const formattedData = formatTableData(rawData);
 
-  console.log("📊 cargando:", tableName, formattedData);
-
+  console.log("📊 Cargando tabla instantáneamente:", tableName, formattedData);
   renderTable(tableName, formattedData);
 }
 
@@ -88,11 +80,7 @@ async function loadTable(tableName) {
 // =====================
 function renderTable(tableName, data) {
   const container = document.getElementById("table-container");
-
-  if (!data || data.length === 0) {
-    container.innerHTML = `<p>No hay datos para ${tableName}</p>`;
-    return;
-  }
+  if (!container) return;
 
   const table = document.createElement("data-table");
   table.setData(data);
@@ -105,8 +93,8 @@ function renderTable(tableName, data) {
 // 🔁 SELECTOR EVENT
 // =====================
 function setupTableSelector(selectElement) {
-  selectElement.addEventListener("change", async (e) => {
-    await loadTable(e.target.value);
+  selectElement.addEventListener("change", (e) => {
+    loadTable(e.target.value);
   });
 }
 
@@ -115,18 +103,47 @@ function setupTableSelector(selectElement) {
 // =====================
 function setupActionMenu() {
   const container = document.getElementById("table-controls");
+  if (!container) return;
 
-  if (!container) {
-    console.warn("⚠️ table-controls no existe");
-    return;
+  let actionMenu = container.querySelector("action-menu");
+  if (!actionMenu) {
+    actionMenu = document.createElement("action-menu");
+    container.appendChild(actionMenu);
   }
-
-  const actionMenu = document.createElement("action-menu");
-  container.appendChild(actionMenu);
 
   actionMenu.addEventListener("add-record", async () => {
     const modal = document.getElementById("new-record-modal");
-    document.body.appendChild(modal);
-    modal.open();
+    if (modal && typeof modal.openMenu === "function") {
+      modal.openMenu();
+    }
+  });
+}
+
+// =====================
+// 💾 MODAL EVENTS
+// =====================
+function setupModalEvents() {
+  const modal = document.getElementById("new-record-modal");
+  if (!modal) return;
+
+  modal.addEventListener("save-record", async (e) => {
+    const { tableName, payload } = e.detail;
+    console.log("💾 Guardando registro en Supabase:", tableName, payload);
+
+    try {
+      if (tableName) {
+        await createRecord(payload, tableName);
+        await fetchTables();
+        await loadTable(currentSelectedTable);
+      }
+    } catch (error) {
+      console.error("❌ Error guardando registro en Supabase:", error);
+      alert(`Error al guardar en Supabase: ${error.message}`);
+    }
+  });
+
+  modal.addEventListener("record-created", async () => {
+    console.log("✅ Registro creado, recargando tabla actual:", currentSelectedTable);
+    await loadTable(currentSelectedTable);
   });
 }

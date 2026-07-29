@@ -1,18 +1,9 @@
-<dialog open>
-  <article>
-    <header>
-      <button aria-label="Close" rel="prev" id="btn-cerrar-modal"></button>
+<form id="form-cliente">
+  <label for="input-nombre">Nombre del cliente:</label>
+  <input type="text" id="input-nombre" name="nombre" placeholder="Ej. Juan Pérez" required />
 
-      <p>
-        <strong>Nuevo cliente</strong>
-      </p>
-    </header>
-
-    <form id="form">
-      <label>Nombre:</label>
-      <input type="text" id="input-nombre" name="nombre" required />
-
-      <input type="submit" id="btn-guardar" value="Guardar"></input>
-    </form>
-  </article>
-</dialog>
+  <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+    <button type="button" class="secondary outline btn-cancel">Cancelar</button>
+    <button type="submit" class="contrast">Guardar Cliente</button>
+  </div>
+</form>

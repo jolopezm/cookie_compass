@@ -64,19 +64,19 @@ async function fetchTables() {
     "detalle_ordenes",
     "vista_ventas",
   ];
-  for (const table of tables) {
-    try {
-      const records = await fetchRecords(table);
-      localStorage.setItem(table, JSON.stringify(records));
 
-      // guardamos el orden de las tablas
-      localStorage.setItem("tables", JSON.stringify(tables));
-    } catch (error) {
-      throw new Error(
-        `Error al obtener los registros de la tabla ${table}: ${error.message}`,
-      );
-    }
-  }
+  await Promise.all(
+    tables.map(async (table) => {
+      try {
+        const records = await fetchRecords(table);
+        localStorage.setItem(table, JSON.stringify(records));
+      } catch (error) {
+        console.warn(`Error al obtener los registros de la tabla ${table}: ${error.message}`);
+      }
+    })
+  );
+
+  localStorage.setItem("tables", JSON.stringify(tables));
 }
 
 export {

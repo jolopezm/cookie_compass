@@ -2,14 +2,14 @@ import { BaseComponent } from "./baseComponent.js";
 
 class DataTable extends BaseComponent {
   constructor() {
-    super();
-
+    super({ useShadowDOM: false });
     this.data = [];
     this.selectedIds = new Set();
   }
 
   setData(data) {
-    this.data = data;
+    this.data = Array.isArray(data) ? data : [];
+    this.selectedIds.clear();
     this.render();
   }
 
@@ -19,57 +19,58 @@ class DataTable extends BaseComponent {
 
   render() {
     if (!this.data || this.data.length === 0) {
-      this.shadowRoot.innerHTML = `<p>No hay datos</p>`;
+      this.innerHTML = `<article><p>No hay datos disponibles para mostrar.</p></article>`;
       return;
     }
 
     const headers = Object.keys(this.data[0]);
 
-    this.shadowRoot.innerHTML = `
-      <table class="striped">
-        <thead>
-          <tr>
-            <th>
-              <input type="checkbox" id="select-all" />
-            </th>
-            ${headers.map((h) => `<th>${h}</th>`).join("")}
-          </tr>
-        </thead>
-        <tbody>
-          ${this.data
-            .map(
-              (row) => `
+    this.innerHTML = `
+      <div class="overflow-auto">
+        <table class="striped">
+          <thead>
             <tr>
-              <td>
-                <input type="checkbox" class="row-checkbox" data-id="${row.id}" />
-              </td>
-              ${headers.map((h) => `<td>${row[h]}</td>`).join("")}
+              <th style="width: 40px;">
+                <input type="checkbox" id="select-all" aria-label="Seleccionar todo" />
+              </th>
+              ${headers.map((h) => `<th>${h}</th>`).join("")}
             </tr>
-          `,
-            )
-            .join("")}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            ${this.data
+              .map(
+                (row, idx) => `
+              <tr>
+                <td>
+                  <input type="checkbox" class="row-checkbox" data-id="${row.id ?? idx}" aria-label="Seleccionar fila" />
+                </td>
+                ${headers.map((h) => `<td>${row[h] ?? ""}</td>`).join("")}
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </div>
     `;
 
-    this.addEvents();
+    this.setupListeners();
   }
 
-  addEvents() {
-    const selectAll = this.shadowRoot.querySelector("#select-all");
-    const checkboxes = this.shadowRoot.querySelectorAll(".row-checkbox");
+  setupListeners() {
+    const selectAll = this.qs("#select-all");
+    const checkboxes = this.qsa(".row-checkbox");
 
-    // ✅ SELECT ALL
-    selectAll.addEventListener("change", (e) => {
-      checkboxes.forEach((cb) => {
-        cb.checked = e.target.checked;
-        this.toggleSelection(cb.dataset.id, cb.checked);
+    if (selectAll) {
+      selectAll.addEventListener("change", (e) => {
+        checkboxes.forEach((cb) => {
+          cb.checked = e.target.checked;
+          this.toggleSelection(cb.dataset.id, cb.checked);
+        });
+        this.emitSelection();
       });
+    }
 
-      this.emitSelection();
-    });
-
-    // ✅ CHECKBOX INDIVIDUAL
     checkboxes.forEach((cb) => {
       cb.addEventListener("change", (e) => {
         this.toggleSelection(cb.dataset.id, e.target.checked);
@@ -87,13 +88,15 @@ class DataTable extends BaseComponent {
   }
 
   emitSelection() {
-    this.dispatchEvent(
-      new CustomEvent("selection-change", {
-        detail: this.getSelectedIds(),
-      }),
-    );
+    this.emit("selection-change", {
+      selectedIds: this.getSelectedIds(),
+    });
   }
 }
 
-customElements.define("data-table", DataTable);
+if (!customElements.get("data-table")) {
+  customElements.define("data-table", DataTable);
+}
+
 export { DataTable };
+

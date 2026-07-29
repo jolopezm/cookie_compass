@@ -1,41 +1,42 @@
 <!doctype html>
-<html>
+<html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title></title>
-    <meta name="description" content="" />
+    <title>Cookie Compass - Gestión</title>
+    <meta name="description" content="Sistema de gestión Cookie Compass" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons-react/dist/index.umd.min.js"></script>
+    <link rel="stylesheet" href="./css/pico/pico.min.css" />
     <link rel="stylesheet" href="./css/custom.css" />
   </head>
   <body class="container">
     <nav>
       <ul>
-        <li><strong>🧭 COMPASS</strong></li>
+        <li><strong>🧭 COOKIE COMPASS</strong></li>
       </ul>
       <ul>
-        <li><a href="#">Iniciar sesión</a></li>
+        <li><a href="#" role="button" class="outline">Iniciar sesión</a></li>
       </ul>
     </nav>
 
-    <section id="table-editor">
-      <div role="group" id="table-controls">
-        <select
-          name="selector-tabla"
-          aria-label="Seleccionar tabla"
-          required
-          id="table-selector"
-        ></select>
-      </div>
+    <main>
+      <section id="table-editor">
+        <div id="table-controls" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+          <select
+            name="selector-tabla"
+            aria-label="Seleccionar tabla"
+            required
+            id="table-selector"
+            style="margin-bottom: 0; max-width: 300px;"
+          ></select>
+        </div>
 
-      <section id="table-container"></section>
-    </section>
+        <section id="table-container"></section>
+      </section>
+    </main>
 
-    <action-button id="action-button"></action-button>
     <modal-new-record id="new-record-modal"></modal-new-record>
     <div id="modal-container"></div>
-    <button>Hola</button>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="./js/app.js"></script>

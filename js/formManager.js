@@ -1,35 +1,22 @@
 async function openForm(tableName) {
-  let html = "";
-
-  const response = await fetch(`templates/formulario_${tableName}.html`);
-  if (response.ok) {
-    html = await response.text();
-  } else {
-    throw new Error(
-      `Error al cargar el formulario para la tabla ${tableName}: ${response.statusText}`,
-    );
+  try {
+    const response = await fetch(`components/formulario_${tableName}.html`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.text();
+  } catch (error) {
+    console.warn(`No se encontró plantilla personalizada para ${tableName}, usando formulario genérico.`);
+    return `
+      <form id="form">
+        <label>Identificador / Nombre:
+          <input type="text" name="nombre" required />
+        </label>
+        <input type="submit" value="Guardar" />
+      </form>
+    `;
   }
-
-  return html;
 }
 
-async function openFormMenu() {
-  const container = document.getElementById("modal-container");
-  container.innerHTML = fetch("templates/add-record.html")
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(
-          `Error al cargar el formulario de menú: ${response.statusText}`,
-        );
-      }
-      return response.text();
-    })
-    .then((html) => {
-      container.innerHTML = html;
-    })
-    .catch((error) => {
-      console.error("Error al mostrar el formulario de menú:", error);
-    });
-}
+export { openForm };
 
-export { openForm, openFormMenu };

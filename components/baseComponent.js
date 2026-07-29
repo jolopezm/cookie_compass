@@ -1,19 +1,45 @@
 class BaseComponent extends HTMLElement {
-  static _globalStyles = [];
-
-  static set globalStyles(sheets) {
-    this._globalStyles = sheets;
-  }
-
-  static get globalStyles() {
-    return this._globalStyles;
-  }
-
-  constructor() {
+  constructor(options = {}) {
     super();
-    this.attachShadow({ mode: "open" });
-    this.shadowRoot.adoptedStyleSheets = BaseComponent._globalStyles;
+    this.useShadowDOM = options.useShadowDOM ?? false;
+
+    if (this.useShadowDOM) {
+      this.attachShadow({ mode: "open" });
+    }
+  }
+
+  get root() {
+    return this.shadowRoot || this;
+  }
+
+  qs(selector) {
+    return this.root.querySelector(selector);
+  }
+
+  qsa(selector) {
+    return this.root.querySelectorAll(selector);
+  }
+
+  emit(eventName, detail = {}, options = {}) {
+    const event = new CustomEvent(eventName, {
+      detail,
+      bubbles: options.bubbles ?? true,
+      composed: options.composed ?? true,
+      cancelable: options.cancelable ?? true,
+    });
+    this.dispatchEvent(event);
+    return event;
+  }
+
+  connectedCallback() {
+    if (typeof this.render === "function") {
+      this.render();
+    }
+    if (typeof this.setupListeners === "function") {
+      this.setupListeners();
+    }
   }
 }
 
 export { BaseComponent };
+
