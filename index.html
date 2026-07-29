@@ -15,20 +15,24 @@
         <li><strong>🧭 COOKIE COMPASS</strong></li>
       </ul>
       <ul>
-        <li><a href="#" role="button" class="outline">Iniciar sesión</a></li>
+        <li><a href="#">Iniciar sesión</a></li>
       </ul>
     </nav>
 
     <main>
       <section id="table-editor">
-        <div id="table-controls" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
-          <select
-            name="selector-tabla"
-            aria-label="Seleccionar tabla"
-            required
-            id="table-selector"
-            style="margin-bottom: 0; max-width: 300px;"
-          ></select>
+        <div id="table-controls">
+          <div id="table-controls-top">
+            <select
+              name="selector-tabla"
+              aria-label="Seleccionar tabla"
+              required
+              id="table-selector"
+            ></select>
+          </div>
+          <div id="table-controls-bottom">
+            <input name="search" type="search" placeholder="Buscar..." />
+          </div>
         </div>
 
         <section id="table-container"></section>

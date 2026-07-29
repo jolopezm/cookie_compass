@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 2. Render inicial
   if (currentSelectedTable) {
-    await loadTable(currentSelectedTable);
+    await loadTable(currentSeleconctedTable);
   }
 
   // 3. Configurar eventos
@@ -39,7 +39,10 @@ async function initTables(selectElement) {
   try {
     await fetchTables();
   } catch (err) {
-    console.warn("⚠️ No se pudo sincronizar con Supabase, usando datos en caché.", err);
+    console.warn(
+      "⚠️ No se pudo sincronizar con Supabase, usando datos en caché.",
+      err,
+    );
   }
 
   const tables = JSON.parse(localStorage.getItem("tables")) || [
@@ -55,7 +58,8 @@ async function initTables(selectElement) {
   tables.forEach((table) => {
     const option = document.createElement("option");
     option.value = table;
-    option.textContent = table.charAt(0).toUpperCase() + table.slice(1).replace(/_/g, " ");
+    option.textContent =
+      table.charAt(0).toUpperCase() + table.slice(1).replace(/_/g, " ");
     selectElement.appendChild(option);
   });
 
@@ -102,7 +106,7 @@ function setupTableSelector(selectElement) {
 // ⚙️ ACTION MENU
 // =====================
 function setupActionMenu() {
-  const container = document.getElementById("table-controls");
+  const container = document.getElementById("table-controls-top");
   if (!container) return;
 
   let actionMenu = container.querySelector("action-menu");
@@ -128,7 +132,6 @@ function setupModalEvents() {
 
   modal.addEventListener("save-record", async (e) => {
     const { tableName, payload } = e.detail;
-    console.log("💾 Guardando registro en Supabase:", tableName, payload);
 
     try {
       if (tableName) {
@@ -143,7 +146,6 @@ function setupModalEvents() {
   });
 
   modal.addEventListener("record-created", async () => {
-    console.log("✅ Registro creado, recargando tabla actual:", currentSelectedTable);
     await loadTable(currentSelectedTable);
   });
 }

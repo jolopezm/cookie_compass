@@ -13,6 +13,14 @@ class DataTable extends BaseComponent {
     this.render();
   }
 
+  getTotalRows() {
+    return this.data.length;
+  }
+
+  getSelectedCount() {
+    return this.selectedIds.size;
+  }
+
   getSelectedIds() {
     return Array.from(this.selectedIds);
   }
@@ -26,7 +34,7 @@ class DataTable extends BaseComponent {
     const headers = Object.keys(this.data[0]);
 
     this.innerHTML = `
-      <div class="overflow-auto">
+      <div class="table-scroll">
         <table class="striped">
           <thead>
             <tr>
@@ -52,9 +60,21 @@ class DataTable extends BaseComponent {
           </tbody>
         </table>
       </div>
+      <div class="table-footer">
+        <span>Filas: <strong class="total-rows-count">${this.data.length}</strong></span>
+        <span>Seleccionadas: <strong class="selected-rows-count">0</strong></span>
+      </div>
     `;
 
     this.setupListeners();
+    this.updateFooter();
+  }
+
+  updateFooter() {
+    const totalEl = this.qs(".total-rows-count");
+    const selectedEl = this.qs(".selected-rows-count");
+    if (totalEl) totalEl.textContent = this.data.length;
+    if (selectedEl) selectedEl.textContent = this.selectedIds.size;
   }
 
   setupListeners() {
@@ -68,6 +88,7 @@ class DataTable extends BaseComponent {
           this.toggleSelection(cb.dataset.id, cb.checked);
         });
         this.emitSelection();
+        this.updateFooter();
       });
     }
 
@@ -75,6 +96,7 @@ class DataTable extends BaseComponent {
       cb.addEventListener("change", (e) => {
         this.toggleSelection(cb.dataset.id, e.target.checked);
         this.emitSelection();
+        this.updateFooter();
       });
     });
   }

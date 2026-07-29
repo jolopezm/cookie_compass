@@ -7,20 +7,18 @@ class ActionMenu extends BaseComponent {
 
   render() {
     this.innerHTML = `
-      <div class="grid" style="display: flex; gap: 0.5rem; align-items: center;">
-        <button id="add-btn" class="outline" title="Agregar nuevo registro">
-          ${this.iconAdd()} Nuevo
-        </button>
-        <button id="edit-btn" class="outline secondary" title="Editar registro">
-          ${this.iconEdit()} Editar
-        </button>
-        <button id="delete-btn" class="outline contrast" title="Eliminar registro">
-          ${this.iconDelete()} Eliminar
-        </button>
-        <button id="filter-btn" class="outline secondary" title="Filtrar">
-          ${this.iconFilter()} Filtrar
-        </button>
-      </div>
+      <button id="add-btn" title="Agregar nuevo registro">
+        ${this.iconAdd()}
+      </button>
+      <button id="edit-btn" title="Editar registro">
+        ${this.iconEdit()}
+      </button>
+      <button id="delete-btn" title="Eliminar registro">
+        ${this.iconDelete()}
+      </button>
+      <button id="filter-btn" title="Filtrar">
+        ${this.iconFilter()}
+      </button>
     `;
   }
 
@@ -88,4 +86,3 @@ if (!customElements.get("action-menu")) {
 }
 
 export { ActionMenu };
-
