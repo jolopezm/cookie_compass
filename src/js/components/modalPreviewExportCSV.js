@@ -59,7 +59,7 @@ class ModalPreviewExportCSV extends ModalBase {
           <div id="preview-container"></div>
         </div>
         <footer>
-          <button id="export-csv-btn">Exportar a CSV</button>
+          <button id="export-csv-btn">Exportar como CSV</button>
         </footer>
       </article>
     </dialog>`;
@@ -70,7 +70,7 @@ class ModalPreviewExportCSV extends ModalBase {
     const exportBtn = this.qs("#export-csv-btn");
     if (exportBtn) {
       exportBtn.addEventListener("click", () => {
-        this.exportCSV();
+        this.exportAsCSV();
       });
     }
   }
@@ -79,7 +79,7 @@ class ModalPreviewExportCSV extends ModalBase {
     this._currentTableName = tableName;
   }
 
-  exportCSV() {
+  exportAsCSV() {
     downloadCSV(this._currentTableName);
   }
 }
