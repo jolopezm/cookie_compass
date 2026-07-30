@@ -2,7 +2,7 @@ import { BaseComponent } from "./baseComponent.js";
 import {
   initFormOrdenes,
   procesarCreacionOrden,
-} from "../src/js/ordenes.jss.js";
+} from "../ordenes.js";
 
 class ModalNewRecord extends BaseComponent {
   constructor() {

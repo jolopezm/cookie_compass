@@ -1,4 +1,4 @@
-@import url("pico/pico.min.css");
+@import "@picocss/pico";
 
 body {
   padding-left: 20px;
