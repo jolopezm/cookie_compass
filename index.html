@@ -37,9 +37,14 @@
       </section>
     </main>
 
+    <button id="btn-export-csv">Exportar a CSV</button>
+
     <modal-new-record id="new-record-modal"></modal-new-record>
+    <modal-preview-export-csv
+      id="preview-export-csv-dialog"
+    ></modal-preview-export-csv>
     <confirm-dialog id="confirm-dialog"></confirm-dialog>
-    <div id="modal-container"></div>
+    <alert-dialog id="alert-dialog"></alert-dialog>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="./src/js/index.js"></script>
