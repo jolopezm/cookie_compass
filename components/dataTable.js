@@ -121,4 +121,3 @@ if (!customElements.get("data-table")) {
 }
 
 export { DataTable };
-

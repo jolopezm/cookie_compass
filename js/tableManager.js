@@ -31,38 +31,36 @@ function formatPrice(price) {
   });
 }
 
-function formatRow(key, value) {
-  const formatted = {};
-
-  if (key.toLowerCase().includes("fecha")) {
-    const date = new Date(value);
-    formatted[key] = formatDate(date);
-  } else if (
-    key.toLowerCase().includes("precio") ||
-    key.toLowerCase().includes("total")
-  ) {
-    formatted[key] = formatPrice(value);
-  } else {
-    formatted[key] = value;
-  }
-
-  return formatted;
-}
-
 function formatTableData(data) {
   if (!data || data.length === 0) {
     return [];
   }
 
-  const formattedData = data.map((row) => {
+  const rawHeaders = Object.keys(data[0]);
+  const headers = formatHeaders([...rawHeaders]);
+
+  const rows = data.map((row) => {
     const formattedRow = {};
-    for (const key in row) {
-      Object.assign(formattedRow, formatRow(key, row[key]));
+    for (let i = 0; i < rawHeaders.length; i++) {
+      const rawKey = rawHeaders[i];
+      const formattedKey = headers[i];
+      const value = row[rawKey];
+      if (rawKey.toLowerCase().includes("fecha")) {
+        formattedRow[formattedKey] = formatDate(new Date(value));
+      } else if (
+        rawKey.toLowerCase().includes("precio") ||
+        rawKey.toLowerCase().includes("total")
+      ) {
+        formattedRow[formattedKey] = formatPrice(value);
+      } else {
+        formattedRow[formattedKey] = value;
+      }
     }
     return formattedRow;
   });
 
-  return formattedData;
+  rows.headers = headers;
+  return rows;
 }
 
 export { formatTableData };
