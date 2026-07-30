@@ -1,4 +1,5 @@
 import { ModalBase } from "./modalBase.js";
+import { downloadCSV } from "../utils/dataManager.js";
 
 class ModalPreviewExportCSV extends ModalBase {
   constructor() {
@@ -6,6 +7,8 @@ class ModalPreviewExportCSV extends ModalBase {
       title: "Vista Previa de Exportación a CSV",
       dialogId: "preview-export-csv-dialog",
     });
+
+    this._currentTableName = "";
   }
 
   setDataPreview(data) {
@@ -72,8 +75,12 @@ class ModalPreviewExportCSV extends ModalBase {
     }
   }
 
+  setCurrentTableName(tableName) {
+    this._currentTableName = tableName;
+  }
+
   exportCSV() {
-    console.log("Exportando a CSV...");
+    downloadCSV(this._currentTableName);
   }
 }
 

@@ -250,6 +250,7 @@ function setupExportCSVButton() {
         `Vista previa de: ${currentSelectedTable.charAt(0).toUpperCase() + currentSelectedTable.slice(1)}`,
       );
       const data = JSON.parse(localStorage.getItem(currentSelectedTable)) || [];
+      modal.setCurrentTableName(currentSelectedTable);
       modal.setDataPreview(data);
       modal.showDialog();
     }
