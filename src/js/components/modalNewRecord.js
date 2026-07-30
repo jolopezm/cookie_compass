@@ -1,8 +1,7 @@
 import { BaseComponent } from "./baseComponent.js";
-import {
-  initFormOrdenes,
-  procesarCreacionOrden,
-} from "../ordenes.js";
+import "./formularioCliente.js";
+import "./formularioProducto.js";
+import "./formularioOrden.js";
 
 class ModalNewRecord extends BaseComponent {
   constructor() {
@@ -34,36 +33,38 @@ class ModalNewRecord extends BaseComponent {
 
     if (dialog) {
       dialog.addEventListener("click", (e) => {
-        if (e.target === dialog) {
-          this.close();
-        }
+        if (e.target === dialog) this.close();
       });
     }
   }
 
-  async openMenu() {
+  openMenu() {
     const titleEl = this.qs("#modal-title");
     const bodyEl = this.qs("#modal-body");
 
     if (titleEl) titleEl.textContent = "Crear Nuevo Registro";
+    if (bodyEl) {
+      bodyEl.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <p>Selecciona el tipo de registro que deseas crear:</p>
+          <button type="button" class="outline" data-type="clientes" style="text-align: left; padding: 1rem;">
+            👤 <strong>Nuevo Cliente</strong>
+            <br><small style="color: var(--pico-muted-color);">Registrar un nuevo cliente en el sistema</small>
+          </button>
+          <button type="button" class="outline secondary" data-type="productos" style="text-align: left; padding: 1rem;">
+            📦 <strong>Nuevo Producto</strong>
+            <br><small style="color: var(--pico-muted-color);">Agregar un producto con su precio unitario</small>
+          </button>
+          <button type="button" class="outline contrast" data-type="ordenes" style="text-align: left; padding: 1rem;">
+            🛒 <strong>Nueva Orden</strong>
+            <br><small style="color: var(--pico-muted-color);">Crear una venta asociando cliente y productos</small>
+          </button>
+        </div>
+      `;
 
-    try {
-      const response = await fetch("components/modalMenuNuevo.html");
-      const htmlContent = await response.text();
-      if (bodyEl) {
-        bodyEl.innerHTML = htmlContent;
-
-        // Configurar clicks de botones del menú
-        const buttons = bodyEl.querySelectorAll("button[data-type]");
-        buttons.forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const targetType = btn.dataset.type;
-            this.loadForm(targetType);
-          });
-        });
-      }
-    } catch (e) {
-      console.error("Error al cargar menú de nuevo registro:", e);
+      bodyEl.querySelectorAll("button[data-type]").forEach((btn) => {
+        btn.addEventListener("click", () => this.loadForm(btn.dataset.type));
+      });
     }
 
     this.showDialog();
@@ -80,71 +81,34 @@ class ModalNewRecord extends BaseComponent {
       ordenes: "Nueva Orden",
     };
 
-    if (titleEl) {
-      titleEl.textContent = titles[tableName] || `Nuevo (${tableName})`;
-    }
+    if (titleEl) titleEl.textContent = titles[tableName] || `Nuevo (${tableName})`;
+    if (!bodyEl) return;
 
-    try {
-      const response = await fetch(`components/formulario_${tableName}.html`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const htmlContent = await response.text();
+    bodyEl.innerHTML = "";
 
-      if (bodyEl) {
-        bodyEl.innerHTML = htmlContent;
-
-        // Si es ordenes, inicializar selects y productos
-        if (tableName === "ordenes") {
-          initFormOrdenes(bodyEl);
-        }
-
-        // Listener de envíos
-        const form = bodyEl.querySelector("form");
-        if (form) {
-          form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            await this.handleSubmit(form, tableName);
-          });
-        }
-
-        // Botón cancelar
-        const cancelBtn = bodyEl.querySelector(".btn-cancel");
-        if (cancelBtn) {
-          cancelBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            this.close();
-          });
-        }
-      }
-    } catch (error) {
-      console.error(`Error al cargar el formulario para ${tableName}:`, error);
-      if (bodyEl) {
-        bodyEl.innerHTML = `<p style="color: red;">Error al cargar el formulario de ${tableName}.</p>`;
-      }
+    const tagName = `formulario-${tableName}`;
+    if (customElements.get(tagName)) {
+      const form = document.createElement(tagName);
+      form.addEventListener("form-submit", (e) => this.handleSubmit(e.detail));
+      form.addEventListener("form-cancel", () => this.close());
+      bodyEl.appendChild(form);
+    } else {
+      bodyEl.innerHTML = `<p style="color: red;">Formulario no disponible para "${tableName}".</p>`;
     }
 
     this.showDialog();
   }
 
-  async handleSubmit(formElement, tableName) {
+  async handleSubmit(detail) {
     try {
-      if (tableName === "ordenes") {
-        await procesarCreacionOrden(formElement);
-      } else {
-        const formData = new FormData(formElement);
-        const payload = Object.fromEntries(formData.entries());
-
-        // Convertir precio a número si corresponde
-        if (payload.precio) {
-          payload.precio = parseFloat(payload.precio);
-        }
-
+      if (detail.tableName !== "ordenes") {
         this.emit("save-record", {
-          tableName,
-          payload,
+          tableName: detail.tableName,
+          payload: detail.payload,
         });
       }
 
-      this.emit("record-created", { tableName });
+      this.emit("record-created", { tableName: detail.tableName });
       this.close();
     } catch (error) {
       alert(`Error al guardar: ${error.message}`);

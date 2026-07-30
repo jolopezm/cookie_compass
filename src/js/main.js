@@ -79,9 +79,10 @@ function setupActionMenu() {
     }
   });
 
-  actionMenu.addEventListener("delete-record", async (e) => {
-    const selectedIds = e.detail.selectedIds;
-    if (!selectedIds || selectedIds.length === 0) {
+  actionMenu.addEventListener("delete-record", async () => {
+    const dataTable = document.querySelector("data-table");
+    const selectedIds = dataTable ? dataTable.getSelectedIds() : [];
+    if (!selectedIds.length) {
       alert("No hay registros seleccionados para eliminar.");
       return;
     }
@@ -161,6 +162,10 @@ function setupSearchBar() {
 }
 
 function init() {
+  window.addEventListener("unhandledrejection", (e) => {
+    console.error("❌ Error no capturado:", e.reason);
+  });
+
   const tableSelector = document.getElementById("table-selector");
   const container = document.getElementById("table-container");
 

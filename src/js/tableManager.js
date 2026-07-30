@@ -63,4 +63,4 @@ function formatTableData(data) {
   return rows;
 }
 
-export { formatTableData };
+export { formatTableData, formatPrice };
