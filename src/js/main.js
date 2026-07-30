@@ -1,6 +1,7 @@
 import { formatTableData } from "./tableManager.js";
 import { fetchTables, createRecord, updateRecord, deleteRecord } from "./supabase.js";
 import "./components/filterForm.js";
+import "./components/confirmDialog.js";
 
 let currentSelectedTable = "";
 const READ_ONLY_TABLES = new Set(["ordenes", "detalle_ordenes", "vista_ventas"]);
@@ -104,7 +105,7 @@ function setupActionMenu() {
     }
 
     if (
-      !confirm(
+      !await confirmDelete(
         `¿Estás seguro de que deseas eliminar ${selectedIds.length} registro(s)?`,
       )
     ) {
@@ -195,6 +196,14 @@ function setupModalEvents() {
   modal.addEventListener("record-created", async () => {
     await loadTable(currentSelectedTable);
   });
+}
+
+function confirmDelete(message) {
+  const dialog = document.getElementById("confirm-dialog");
+  if (dialog && typeof dialog.show === "function") {
+    return dialog.show(message);
+  }
+  return Promise.resolve(confirm(message));
 }
 
 function init() {
