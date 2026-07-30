@@ -55,7 +55,7 @@ class ModalPreviewExportCSV extends ModalBase {
           ${this._showCloseButton ? '<button aria-label="Cerrar" rel="prev" class="close-btn" style="width: auto; padding: 0.25rem 0.5rem;"></button>' : ""}
         </header>
         <div id="modal-body">
-          <p>Mostrando los datos como realmente son.<br/> Asi seran exportados.</p>
+          <small>Mostrando los datos como realmente son.<br/> Asi seran exportados.</small>
           <div id="preview-container"></div>
         </div>
         <footer>

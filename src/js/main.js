@@ -4,11 +4,15 @@ import {
   createRecord,
   updateRecord,
   deleteRecord,
+  getSession,
+  onAuthChange,
+  signOut,
 } from "./supabase.js";
 import "./components/filterForm.js";
 import "./components/confirmDialog.js";
 import "./components/modalPreviewExportCSV.js";
 import "./components/alertDialog.js";
+import "./components/loginForm.js";
 
 let currentSelectedTable = "";
 const READ_ONLY_TABLES = new Set([
@@ -245,7 +249,6 @@ function setupExportCSVButton() {
     const modal = document.querySelector("modal-preview-export-csv");
     const tables = JSON.parse(localStorage.getItem("tables")) || [];
     if (modal && typeof modal.setDataPreview === "function") {
-      // we are previewing the data of the current selected table
       modal.setTitle(
         `Vista previa de: ${currentSelectedTable.charAt(0).toUpperCase() + currentSelectedTable.slice(1)}`,
       );
@@ -257,10 +260,48 @@ function setupExportCSVButton() {
   });
 }
 
-function init() {
-  window.addEventListener("unhandledrejection", (e) => {
-    console.error("❌ Error no capturado:", e.reason);
-  });
+async function init() {
+  const {
+    data: { session },
+  } = await getSession();
+
+  const authContainer = document.getElementById("auth-container");
+  const appContent = document.getElementById("app-content");
+  const userInfo = document.getElementById("user-info");
+
+  if (!session) {
+    appContent.hidden = true;
+    authContainer.hidden = false;
+    if (userInfo) userInfo.hidden = true;
+
+    let loginForm = authContainer.querySelector("login-form");
+    if (!loginForm) {
+      loginForm = document.createElement("login-form");
+      authContainer.appendChild(loginForm);
+    }
+
+    loginForm.addEventListener("auth-success", () => init(), { once: true });
+    return;
+  }
+
+  authContainer.hidden = true;
+  appContent.hidden = false;
+
+  if (userInfo) {
+    document.getElementById("user-email").textContent =
+      session.user.email.slice(0, 10);
+    userInfo.hidden = false;
+  }
+
+  if (!logoutReady) {
+    logoutReady = true;
+    document
+      .getElementById("logout-btn")
+      .addEventListener("click", async (e) => {
+        e.preventDefault();
+        await signOut();
+      });
+  }
 
   const tableSelector = document.getElementById("table-selector");
   const container = document.getElementById("table-container");
@@ -281,5 +322,24 @@ function init() {
     setupExportCSVButton();
   });
 }
+
+let authSubscribed = false;
+let logoutReady = false;
+function subscribeAuthChanges() {
+  if (authSubscribed) return;
+  authSubscribed = true;
+  onAuthChange((event) => {
+    if (event === "SIGNED_OUT") {
+      authSubscribed = false;
+      init();
+    }
+  });
+}
+
+subscribeAuthChanges();
+
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("❌ Error no capturado:", e.reason);
+});
 
 export { init };

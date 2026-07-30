@@ -15,6 +15,37 @@ body {
   --background-color: #ffffff;
 }
 
+#auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.login-card {
+  max-width: 400px;
+  width: 100%;
+}
+
+.login-card header {
+  text-align: center;
+  padding-bottom: 0px;
+}
+
+.login-card main {
+  flex: 1;
+}
+
+#auth-container[hidden] {
+  display: none;
+}
+
+.error-message {
+  color: var(--accent-color);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
 #table-editor {
   display: flex;
   flex-direction: column;

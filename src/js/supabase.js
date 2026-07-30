@@ -1,8 +1,29 @@
+import { createClient } from '@supabase/supabase-js';
+
 const supabaseUrl = "https://ibccdlzhptosofuahsxb.supabase.co";
-const supabasekey =
+const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImliY2NkbHpocHRvc29mdWFoc3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1ODAxNTcsImV4cCI6MjEwMDE1NjE1N30.pY41HzxkrTnUrgi5_xGKVdy3-BSeqVqRDjpmPUMfndQ";
 
-const supabaseClient = supabase.createClient(supabaseUrl, supabasekey);
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+async function signIn(email, password) {
+  return supabaseClient.auth.signInWithPassword({ email, password });
+}
+
+async function signOut() {
+  return supabaseClient.auth.signOut();
+}
+
+async function getSession() {
+  return supabaseClient.auth.getSession();
+}
+
+function onAuthChange(callback) {
+  const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event) => {
+    callback(event);
+  });
+  return subscription;
+}
 
 async function fetchRecords(tableName) {
   const { data: fetchedRecords, error } = await supabaseClient
@@ -81,6 +102,10 @@ async function fetchTables() {
 
 export {
   supabaseClient,
+  signIn,
+  signOut,
+  getSession,
+  onAuthChange,
   createRecord,
   fetchTables,
   updateRecord,
