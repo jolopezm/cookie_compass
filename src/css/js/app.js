@@ -1,8 +1,8 @@
 import { formatTableData } from "./tableManager.js";
 import { fetchTables, createRecord } from "./supabase.js";
-import "../../../components/dataTable.js";
-import "../../../components/tableOptionsMenu.js";
-import "../../../components/modalNewRecord.js";
+import "../../js/components/dataTable.js";
+import "../../js/components/tableOptionsMenu.js";
+import "../../js/components/modalNewRecord.js";
 
 let currentSelectedTable = "";
 
