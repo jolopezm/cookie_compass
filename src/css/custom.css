@@ -133,6 +133,18 @@ data-table .table-footer {
   border-top: 3px solid var(--text-color);
 }
 
+#preview-container {
+  overflow: auto;
+  margin: 1rem 0;
+  max-height: 300px;
+  font-size: 14px;
+}
+
+#export-csv-btn {
+  /*position it to the right*/
+  margin-left: auto;
+}
+
 .remove-filter {
   width: 10px;
   padding: 0;

@@ -1,72 +1,38 @@
-import { BaseComponent } from "./baseComponent.js";
+import { ModalBase } from "./modalBase.js";
 import "./formularioCliente.js";
 import "./formularioProducto.js";
 import "./formularioOrden.js";
 
-class ModalNewRecord extends BaseComponent {
+class ModalNewRecord extends ModalBase {
   constructor() {
-    super({ useShadowDOM: false });
+    super({ title: "Nuevo Registro", dialogId: "new-record-dialog" });
     this.currentTable = "";
     this.editData = null;
   }
 
-  render() {
-    this.innerHTML = `
-      <dialog id="new-record-dialog">
-        <article style="max-width: 600px; width: 100%;">
-          <header style="display: flex; justify-content: space-between; align-items: center;">
-            <strong id="modal-title">Nuevo Registro</strong>
-            <button aria-label="Cerrar" rel="prev" class="close-btn" id="modal-close-header" style="width: auto; padding: 0.25rem 0.5rem;"></button>
-          </header>
-          <div id="modal-body" style="padding-top: 1rem;"></div>
-        </article>
-      </dialog>
-    `;
-  }
-
-  setupListeners() {
-    const dialog = this.qs("#new-record-dialog");
-    const closeHeaderBtn = this.qs("#modal-close-header");
-
-    if (closeHeaderBtn) {
-      closeHeaderBtn.addEventListener("click", () => this.close());
-    }
-
-    if (dialog) {
-      dialog.addEventListener("click", (e) => {
-        if (e.target === dialog) this.close();
-      });
-    }
-  }
-
   openMenu() {
-    const titleEl = this.qs("#modal-title");
-    const bodyEl = this.qs("#modal-body");
+    this.setTitle("Crear Nuevo Registro");
+    this.setBody(`
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <p>Selecciona el tipo de registro que deseas crear:</p>
+        <button type="button" class="outline" data-type="clientes" style="text-align: left; padding: 1rem;">
+          👤 <strong>Nuevo Cliente</strong>
+          <br><small style="color: var(--pico-muted-color);">Registrar un nuevo cliente en el sistema</small>
+        </button>
+        <button type="button" class="outline secondary" data-type="productos" style="text-align: left; padding: 1rem;">
+          📦 <strong>Nuevo Producto</strong>
+          <br><small style="color: var(--pico-muted-color);">Agregar un producto con su precio unitario</small>
+        </button>
+        <button type="button" class="outline contrast" data-type="ordenes" style="text-align: left; padding: 1rem;">
+          🛒 <strong>Nueva Orden</strong>
+          <br><small style="color: var(--pico-muted-color);">Crear una venta asociando cliente y productos</small>
+        </button>
+      </div>
+    `);
 
-    if (titleEl) titleEl.textContent = "Crear Nuevo Registro";
-    if (bodyEl) {
-      bodyEl.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <p>Selecciona el tipo de registro que deseas crear:</p>
-          <button type="button" class="outline" data-type="clientes" style="text-align: left; padding: 1rem;">
-            👤 <strong>Nuevo Cliente</strong>
-            <br><small style="color: var(--pico-muted-color);">Registrar un nuevo cliente en el sistema</small>
-          </button>
-          <button type="button" class="outline secondary" data-type="productos" style="text-align: left; padding: 1rem;">
-            📦 <strong>Nuevo Producto</strong>
-            <br><small style="color: var(--pico-muted-color);">Agregar un producto con su precio unitario</small>
-          </button>
-          <button type="button" class="outline contrast" data-type="ordenes" style="text-align: left; padding: 1rem;">
-            🛒 <strong>Nueva Orden</strong>
-            <br><small style="color: var(--pico-muted-color);">Crear una venta asociando cliente y productos</small>
-          </button>
-        </div>
-      `;
-
-      bodyEl.querySelectorAll("button[data-type]").forEach((btn) => {
-        btn.addEventListener("click", () => this.loadForm(btn.dataset.type));
-      });
-    }
+    this.qs("#modal-body")?.querySelectorAll("button[data-type]").forEach((btn) => {
+      btn.addEventListener("click", () => this.loadForm(btn.dataset.type));
+    });
 
     this.showDialog();
   }
@@ -78,8 +44,6 @@ class ModalNewRecord extends BaseComponent {
 
   async loadForm(tableName, data = null) {
     this.currentTable = tableName;
-    const titleEl = this.qs("#modal-title");
-    const bodyEl = this.qs("#modal-body");
 
     const titles = {
       clientes: data ? "Editar Cliente" : "Nuevo Cliente",
@@ -87,9 +51,10 @@ class ModalNewRecord extends BaseComponent {
       ordenes: "Nueva Orden",
     };
 
-    if (titleEl) titleEl.textContent = titles[tableName] || (data ? `Editar (${tableName})` : `Nuevo (${tableName})`);
-    if (!bodyEl) return;
+    this.setTitle(titles[tableName] || (data ? `Editar (${tableName})` : `Nuevo (${tableName})`));
 
+    const bodyEl = this.qs("#modal-body");
+    if (!bodyEl) return;
     bodyEl.innerHTML = "";
 
     const tagName = `formulario-${tableName}`;
@@ -123,26 +88,8 @@ class ModalNewRecord extends BaseComponent {
       this.editData = null;
       this.close();
     } catch (error) {
-      alert(`Error al guardar: ${error.message}`);
+      this.emit("alert", { message: `Error al guardar: ${error.message}`, type: "error" });
       console.error("Error al procesar formulario:", error);
-    }
-  }
-
-  showDialog() {
-    const dialog = this.qs("#new-record-dialog");
-    if (dialog && typeof dialog.showModal === "function") {
-      dialog.showModal();
-    } else if (dialog) {
-      dialog.setAttribute("open", "true");
-    }
-  }
-
-  close() {
-    const dialog = this.qs("#new-record-dialog");
-    if (dialog && typeof dialog.close === "function") {
-      dialog.close();
-    } else if (dialog) {
-      dialog.removeAttribute("open");
     }
   }
 }

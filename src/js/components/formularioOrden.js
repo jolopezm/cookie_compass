@@ -117,7 +117,10 @@ class FormularioOrden extends BaseComponent {
         const result = await procesarCreacionOrden(this.qs("form"));
         this.emit("form-submit", { tableName: "ordenes", result });
       } catch (error) {
-        alert(`Error al crear la orden: ${error.message}`);
+        const alertDialog = document.getElementById("alert-dialog");
+        if (alertDialog && typeof alertDialog.show === "function") {
+          alertDialog.show({ message: `Error al crear la orden: ${error.message}`, type: "error" });
+        }
         console.error("Error al procesar orden:", error);
       }
     });

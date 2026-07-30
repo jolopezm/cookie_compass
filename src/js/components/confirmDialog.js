@@ -1,52 +1,46 @@
-import { BaseComponent } from "./baseComponent.js";
+import { ModalBase } from "./modalBase.js";
 
-class ConfirmDialog extends BaseComponent {
+class ConfirmDialog extends ModalBase {
   constructor() {
-    super({ useShadowDOM: false });
+    super({ showCloseButton: false, maxWidth: "400px", dialogId: "confirm-dialog" });
   }
 
   render() {
-    this.innerHTML = `
-      <dialog id="confirm-dialog">
-        <article style="max-width: 400px; width: 100%;">
-          <header>
-            <strong>Confirmar acción</strong>
-          </header>
-          <div id="confirm-message" style="padding: 1rem 0;"></div>
-          <footer style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button id="confirm-cancel-btn" class="secondary outline">Cancelar</button>
-            <button id="confirm-ok-btn" class="contrast">Confirmar</button>
-          </footer>
-        </article>
-      </dialog>
-    `;
+    super.render();
+    const article = this.qs("article");
+    article.insertAdjacentHTML("beforeend", `
+      <footer style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button id="confirm-cancel-btn" class="secondary outline">Cancelar</button>
+        <button id="confirm-ok-btn" class="contrast">Confirmar</button>
+      </footer>
+    `);
   }
 
   show(message) {
-    const dialog = this.qs("#confirm-dialog");
-    const msgEl = this.qs("#confirm-message");
-    if (msgEl) msgEl.textContent = message;
+    this.setTitle("Confirmar acción");
+    this.setBody(`<p>${message}</p>`);
+
+    const dialog = this.qs("dialog");
+    const okBtn = this.qs("#confirm-ok-btn");
+    const cancelBtn = this.qs("#confirm-cancel-btn");
 
     return new Promise((resolve) => {
-      const okBtn = this.qs("#confirm-ok-btn");
-      const cancelBtn = this.qs("#confirm-cancel-btn");
-
       const cleanup = () => {
-        okBtn.removeEventListener("click", onConfirm);
-        cancelBtn.removeEventListener("click", onCancel);
-        dialog.removeEventListener("click", onBackdrop);
-        dialog.removeEventListener("close", onCancel);
+        okBtn?.removeEventListener("click", onConfirm);
+        cancelBtn?.removeEventListener("click", onCancel);
+        dialog?.removeEventListener("click", onBackdrop);
+        dialog?.removeEventListener("close", onCancel);
       };
 
       const onConfirm = () => {
         cleanup();
-        dialog.close();
+        this.close();
         resolve(true);
       };
 
       const onCancel = () => {
         cleanup();
-        dialog.close();
+        this.close();
         resolve(false);
       };
 
@@ -54,16 +48,12 @@ class ConfirmDialog extends BaseComponent {
         if (e.target === dialog) onCancel();
       };
 
-      okBtn.addEventListener("click", onConfirm);
-      cancelBtn.addEventListener("click", onCancel);
-      dialog.addEventListener("click", onBackdrop);
-      dialog.addEventListener("close", onCancel);
+      okBtn?.addEventListener("click", onConfirm);
+      cancelBtn?.addEventListener("click", onCancel);
+      dialog?.addEventListener("click", onBackdrop);
+      dialog?.addEventListener("close", onCancel);
 
-      if (typeof dialog.showModal === "function") {
-        dialog.showModal();
-      } else {
-        dialog.setAttribute("open", "true");
-      }
+      this.showDialog();
     });
   }
 }

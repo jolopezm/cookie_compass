@@ -1,8 +1,8 @@
-import { BaseComponent } from "./baseComponent.js";
+import { ModalBase } from "./modalBase.js";
 
-class FilterForm extends BaseComponent {
+class FilterForm extends ModalBase {
   constructor() {
-    super({ useShadowDOM: false });
+    super({ title: "Filtros", maxWidth: "720px", dialogId: "filter-dialog" });
     this.fields = [];
   }
 
@@ -57,7 +57,6 @@ class FilterForm extends BaseComponent {
 
   render() {
     this.refreshFields();
-
     this.innerHTML = `
       <dialog id="filter-dialog">
         <article style="max-width: 720px; width: 100%;">
@@ -97,23 +96,16 @@ class FilterForm extends BaseComponent {
   }
 
   setupListeners() {
-    const dialog = this.qs("#filter-dialog");
+    super.setupListeners();
 
-    this.qs(".close-btn").addEventListener("click", () => this.close());
-    if (dialog) {
-      dialog.addEventListener("click", (e) => {
-        if (e.target === dialog) this.close();
-      });
-    }
-
-    this.qs(".add-filter").addEventListener("click", () => this.addFilterRow());
-    this.qs(".apply-filters").addEventListener("click", () => {
+    this.qs(".add-filter")?.addEventListener("click", () => this.addFilterRow());
+    this.qs(".apply-filters")?.addEventListener("click", () => {
       this.apply();
       this.close();
     });
-    this.qs(".clear-filters").addEventListener("click", () => this.clear());
+    this.qs(".clear-filters")?.addEventListener("click", () => this.clear());
 
-    this.qs(".filter-rows").addEventListener("change", (e) => {
+    this.qs(".filter-rows")?.addEventListener("change", (e) => {
       if (e.target.classList.contains("filter-field")) {
         this.updateOperatorAndValue(e.target);
       }
@@ -122,7 +114,7 @@ class FilterForm extends BaseComponent {
       }
     });
 
-    this.qs(".filter-rows").addEventListener("click", (e) => {
+    this.qs(".filter-rows")?.addEventListener("click", (e) => {
       if (e.target.classList.contains("remove-filter")) {
         const row = e.target.closest(".filter-row");
         if (row && this.qsa(".filter-row").length > 1) {
@@ -146,24 +138,6 @@ class FilterForm extends BaseComponent {
       sel.value = current || "";
     });
     this.showDialog();
-  }
-
-  showDialog() {
-    const dialog = this.qs("#filter-dialog");
-    if (dialog && typeof dialog.showModal === "function") {
-      dialog.showModal();
-    } else if (dialog) {
-      dialog.setAttribute("open", "true");
-    }
-  }
-
-  close() {
-    const dialog = this.qs("#filter-dialog");
-    if (dialog && typeof dialog.close === "function") {
-      dialog.close();
-    } else if (dialog) {
-      dialog.removeAttribute("open");
-    }
   }
 
   addFilterRow() {

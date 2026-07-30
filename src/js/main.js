@@ -1,10 +1,28 @@
 import { formatTableData } from "./tableManager.js";
-import { fetchTables, createRecord, updateRecord, deleteRecord } from "./supabase.js";
+import {
+  fetchTables,
+  createRecord,
+  updateRecord,
+  deleteRecord,
+} from "./supabase.js";
 import "./components/filterForm.js";
 import "./components/confirmDialog.js";
+import "./components/modalPreviewExportCSV.js";
+import "./components/alertDialog.js";
 
 let currentSelectedTable = "";
-const READ_ONLY_TABLES = new Set(["ordenes", "detalle_ordenes", "vista_ventas"]);
+const READ_ONLY_TABLES = new Set([
+  "ordenes",
+  "detalle_ordenes",
+  "vista_ventas",
+]);
+
+function showAlert(message, type = "error") {
+  const dialog = document.getElementById("alert-dialog");
+  if (dialog && typeof dialog.show === "function") {
+    dialog.show({ message, type });
+  }
+}
 
 async function initTables(selectElement) {
   try {
@@ -93,21 +111,23 @@ function setupActionMenu() {
 
   actionMenu.addEventListener("delete-record", async () => {
     if (READ_ONLY_TABLES.has(currentSelectedTable)) {
-      alert("Esta tabla es de solo lectura, no se pueden eliminar registros.");
+      showAlert(
+        "Esta tabla es de solo lectura, no se pueden eliminar registros.",
+      );
       return;
     }
 
     const dataTable = document.querySelector("data-table");
     const selectedIds = dataTable ? dataTable.getSelectedIds() : [];
     if (!selectedIds.length) {
-      alert("No hay registros seleccionados para eliminar.");
+      showAlert("No hay registros seleccionados para eliminar.");
       return;
     }
 
     if (
-      !await confirmDelete(
+      !(await confirmDelete(
         `¿Estás seguro de que deseas eliminar ${selectedIds.length} registro(s)?`,
-      )
+      ))
     ) {
       return;
     }
@@ -121,27 +141,34 @@ function setupActionMenu() {
     } catch (error) {
       console.error("❌ Error eliminando registros:", error);
       console.error("Detalles:", JSON.stringify(error, null, 2));
-      alert(`Error al eliminar registros: ${error.message || JSON.stringify(error)}`);
+      showAlert(
+        `Error al eliminar registros: ${error.message || JSON.stringify(error)}`,
+      );
     }
   });
 
   actionMenu.addEventListener("edit-record", () => {
     if (READ_ONLY_TABLES.has(currentSelectedTable)) {
-      alert("Esta tabla es de solo lectura, no se pueden editar registros.");
+      showAlert(
+        "Esta tabla es de solo lectura, no se pueden editar registros.",
+      );
       return;
     }
 
     const dataTable = document.querySelector("data-table");
     const selectedIds = dataTable ? dataTable.getSelectedIds() : [];
     if (selectedIds.length !== 1) {
-      alert("Selecciona exactamente un registro para editar.");
+      showAlert("Selecciona exactamente un registro para editar.");
       return;
     }
 
-    const rawData = JSON.parse(localStorage.getItem(currentSelectedTable)) || [];
-    const record = rawData.find((r) => r.id === selectedIds[0] || String(r.id) === selectedIds[0]);
+    const rawData =
+      JSON.parse(localStorage.getItem(currentSelectedTable)) || [];
+    const record = rawData.find(
+      (r) => r.id === selectedIds[0] || String(r.id) === selectedIds[0],
+    );
     if (!record) {
-      alert("No se encontró el registro seleccionado.");
+      showAlert("No se encontró el registro seleccionado.");
       return;
     }
 
@@ -174,7 +201,7 @@ function setupModalEvents() {
       }
     } catch (error) {
       console.error("❌ Error guardando registro en Supabase:", error);
-      alert(`Error al guardar en Supabase: ${error.message}`);
+      showAlert(`Error al guardar en Supabase: ${error.message}`);
     }
   });
 
@@ -189,12 +216,16 @@ function setupModalEvents() {
       }
     } catch (error) {
       console.error("❌ Error actualizando registro en Supabase:", error);
-      alert(`Error al actualizar en Supabase: ${error.message}`);
+      showAlert(`Error al actualizar en Supabase: ${error.message}`);
     }
   });
 
   modal.addEventListener("record-created", async () => {
     await loadTable(currentSelectedTable);
+  });
+
+  modal.addEventListener("alert", (e) => {
+    showAlert(e.detail.message, e.detail.type);
   });
 }
 
@@ -204,6 +235,26 @@ function confirmDelete(message) {
     return dialog.show(message);
   }
   return Promise.resolve(confirm(message));
+}
+
+function setupExportCSVButton() {
+  const exportBtn = document.getElementById("btn-export-csv");
+  if (!exportBtn) return;
+
+  exportBtn.addEventListener("click", () => {
+    const modal = document.querySelector("modal-preview-export-csv");
+    const tables = JSON.parse(localStorage.getItem("tables")) || [];
+    if (modal && typeof modal.setDataPreview === "function") {
+      // we are previewing the data of the current selected table
+      modal.setTitle(
+        `Vista previa de: ${currentSelectedTable.charAt(0).toUpperCase() + currentSelectedTable.slice(1)}`,
+      );
+      const data = JSON.parse(localStorage.getItem(currentSelectedTable)) || [];
+      modal.setCurrentTableName(currentSelectedTable);
+      modal.setDataPreview(data);
+      modal.showDialog();
+    }
+  });
 }
 
 function init() {
@@ -227,6 +278,7 @@ function init() {
     setupTableSelector(tableSelector);
     setupActionMenu();
     setupModalEvents();
+    setupExportCSVButton();
   });
 }
 
