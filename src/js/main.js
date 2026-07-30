@@ -1,8 +1,9 @@
 import { formatTableData } from "./tableManager.js";
-import { fetchTables, createRecord, deleteRecord } from "./supabase.js";
-import { parseSearchQuery } from "./searchManager.js";
+import { fetchTables, createRecord, updateRecord, deleteRecord } from "./supabase.js";
+import "./components/filterForm.js";
 
 let currentSelectedTable = "";
+const READ_ONLY_TABLES = new Set(["ordenes", "detalle_ordenes", "vista_ventas"]);
 
 async function initTables(selectElement) {
   try {
@@ -40,6 +41,16 @@ function loadTable(tableName) {
 
   const rawData = JSON.parse(localStorage.getItem(tableName)) || [];
   const formattedData = formatTableData(rawData);
+
+  const actionMenu = document.querySelector("action-menu");
+  if (actionMenu && typeof actionMenu.setReadOnly === "function") {
+    actionMenu.setReadOnly(READ_ONLY_TABLES.has(tableName));
+  }
+
+  const filterForm = document.querySelector("filter-form");
+  if (filterForm && typeof filterForm.resetFields === "function") {
+    filterForm.resetFields();
+  }
 
   renderTable(formattedData);
 }
@@ -80,6 +91,11 @@ function setupActionMenu() {
   });
 
   actionMenu.addEventListener("delete-record", async () => {
+    if (READ_ONLY_TABLES.has(currentSelectedTable)) {
+      alert("Esta tabla es de solo lectura, no se pueden eliminar registros.");
+      return;
+    }
+
     const dataTable = document.querySelector("data-table");
     const selectedIds = dataTable ? dataTable.getSelectedIds() : [];
     if (!selectedIds.length) {
@@ -103,7 +119,41 @@ function setupActionMenu() {
       await loadTable(currentSelectedTable);
     } catch (error) {
       console.error("❌ Error eliminando registros:", error);
-      alert(`Error al eliminar registros: ${error.message}`);
+      console.error("Detalles:", JSON.stringify(error, null, 2));
+      alert(`Error al eliminar registros: ${error.message || JSON.stringify(error)}`);
+    }
+  });
+
+  actionMenu.addEventListener("edit-record", () => {
+    if (READ_ONLY_TABLES.has(currentSelectedTable)) {
+      alert("Esta tabla es de solo lectura, no se pueden editar registros.");
+      return;
+    }
+
+    const dataTable = document.querySelector("data-table");
+    const selectedIds = dataTable ? dataTable.getSelectedIds() : [];
+    if (selectedIds.length !== 1) {
+      alert("Selecciona exactamente un registro para editar.");
+      return;
+    }
+
+    const rawData = JSON.parse(localStorage.getItem(currentSelectedTable)) || [];
+    const record = rawData.find((r) => r.id === selectedIds[0] || String(r.id) === selectedIds[0]);
+    if (!record) {
+      alert("No se encontró el registro seleccionado.");
+      return;
+    }
+
+    const modal = document.getElementById("new-record-modal");
+    if (modal && typeof modal.openForEdit === "function") {
+      modal.openForEdit(currentSelectedTable, record);
+    }
+  });
+
+  actionMenu.addEventListener("filter-record", () => {
+    const filterForm = document.getElementById("filter-form");
+    if (filterForm && typeof filterForm.show === "function") {
+      filterForm.show();
     }
   });
 }
@@ -127,37 +177,23 @@ function setupModalEvents() {
     }
   });
 
+  modal.addEventListener("update-record", async (e) => {
+    const { tableName, payload, id } = e.detail;
+
+    try {
+      if (tableName && id) {
+        await updateRecord(id, payload, tableName);
+        await fetchTables();
+        await loadTable(currentSelectedTable);
+      }
+    } catch (error) {
+      console.error("❌ Error actualizando registro en Supabase:", error);
+      alert(`Error al actualizar en Supabase: ${error.message}`);
+    }
+  });
+
   modal.addEventListener("record-created", async () => {
     await loadTable(currentSelectedTable);
-  });
-}
-
-function setupSearchBar() {
-  const searchInput = document.getElementById("search-input");
-  if (!searchInput) return;
-
-  searchInput.addEventListener("input", () => {
-    const query = searchInput.value.trim();
-    const table = document.querySelector("data-table");
-    if (!table || !table._fullData) return;
-
-    if (!query) {
-      table.setData([...table._fullData]);
-      return;
-    }
-
-    const result = parseSearchQuery(query, table._fullData);
-    if (result) {
-      table.setData(result);
-      return;
-    }
-
-    const filtered = table._fullData.filter((row) =>
-      Object.values(row).some((value) =>
-        String(value).toLowerCase().includes(query.toLowerCase()),
-      ),
-    );
-    table.setData(filtered);
   });
 }
 
@@ -182,7 +218,6 @@ function init() {
     setupTableSelector(tableSelector);
     setupActionMenu();
     setupModalEvents();
-    setupSearchBar();
   });
 }
 

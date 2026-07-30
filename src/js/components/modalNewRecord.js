@@ -7,6 +7,7 @@ class ModalNewRecord extends BaseComponent {
   constructor() {
     super({ useShadowDOM: false });
     this.currentTable = "";
+    this.editData = null;
   }
 
   render() {
@@ -70,18 +71,23 @@ class ModalNewRecord extends BaseComponent {
     this.showDialog();
   }
 
-  async loadForm(tableName) {
+  openForEdit(tableName, recordData) {
+    this.editData = recordData;
+    this.loadForm(tableName, recordData);
+  }
+
+  async loadForm(tableName, data = null) {
     this.currentTable = tableName;
     const titleEl = this.qs("#modal-title");
     const bodyEl = this.qs("#modal-body");
 
     const titles = {
-      clientes: "Nuevo Cliente",
-      productos: "Nuevo Producto",
+      clientes: data ? "Editar Cliente" : "Nuevo Cliente",
+      productos: data ? "Editar Producto" : "Nuevo Producto",
       ordenes: "Nueva Orden",
     };
 
-    if (titleEl) titleEl.textContent = titles[tableName] || `Nuevo (${tableName})`;
+    if (titleEl) titleEl.textContent = titles[tableName] || (data ? `Editar (${tableName})` : `Nuevo (${tableName})`);
     if (!bodyEl) return;
 
     bodyEl.innerHTML = "";
@@ -92,6 +98,9 @@ class ModalNewRecord extends BaseComponent {
       form.addEventListener("form-submit", (e) => this.handleSubmit(e.detail));
       form.addEventListener("form-cancel", () => this.close());
       bodyEl.appendChild(form);
+      if (data && typeof form.setData === "function") {
+        form.setData(data);
+      }
     } else {
       bodyEl.innerHTML = `<p style="color: red;">Formulario no disponible para "${tableName}".</p>`;
     }
@@ -102,13 +111,16 @@ class ModalNewRecord extends BaseComponent {
   async handleSubmit(detail) {
     try {
       if (detail.tableName !== "ordenes") {
-        this.emit("save-record", {
+        const eventName = detail.id ? "update-record" : "save-record";
+        this.emit(eventName, {
           tableName: detail.tableName,
           payload: detail.payload,
+          id: detail.id,
         });
       }
 
       this.emit("record-created", { tableName: detail.tableName });
+      this.editData = null;
       this.close();
     } catch (error) {
       alert(`Error al guardar: ${error.message}`);

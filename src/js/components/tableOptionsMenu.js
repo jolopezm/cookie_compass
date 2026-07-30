@@ -60,6 +60,14 @@ class ActionMenu extends BaseComponent {
     `;
   }
 
+  setReadOnly(readOnly) {
+    const btns = ["#edit-btn", "#delete-btn"];
+    btns.forEach((sel) => {
+      const btn = this.qs(sel);
+      if (btn) btn.disabled = readOnly;
+    });
+  }
+
   setupListeners() {
     const addBtn = this.qs("#add-btn");
     const editBtn = this.qs("#edit-btn");

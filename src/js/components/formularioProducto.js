@@ -1,6 +1,11 @@
 import { BaseComponent } from "./baseComponent.js";
 
 class FormularioProducto extends BaseComponent {
+  constructor() {
+    super({ useShadowDOM: false });
+    this.editId = null;
+  }
+
   render() {
     this.innerHTML = `
       <form id="form-producto">
@@ -18,13 +23,21 @@ class FormularioProducto extends BaseComponent {
     `;
   }
 
+  setData(data) {
+    this.editId = data.id;
+    const nombreInput = this.qs("#input-producto-nombre");
+    const precioInput = this.qs("#input-producto-precio");
+    if (nombreInput) nombreInput.value = data.nombre || "";
+    if (precioInput) precioInput.value = data.precio ?? "";
+  }
+
   setupListeners() {
     this.qs("form").addEventListener("submit", (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
       const payload = Object.fromEntries(formData);
       if (payload.precio) payload.precio = parseFloat(payload.precio);
-      this.emit("form-submit", { tableName: "productos", payload });
+      this.emit("form-submit", { tableName: "productos", payload, id: this.editId });
     });
 
     this.qs(".btn-cancel").addEventListener("click", () => {

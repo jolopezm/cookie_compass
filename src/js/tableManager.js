@@ -39,13 +39,15 @@ function formatTableData(data) {
   const rawHeaders = Object.keys(data[0]);
   const headers = formatHeaders([...rawHeaders]);
 
-  const rows = data.map((row) => {
+    const rows = data.map((row) => {
     const formattedRow = {};
     for (let i = 0; i < rawHeaders.length; i++) {
       const rawKey = rawHeaders[i];
       const formattedKey = headers[i];
       const value = row[rawKey];
-      if (rawKey.toLowerCase().includes("fecha")) {
+      if (rawKey === "id") {
+        formattedRow.id = value;
+      } else if (rawKey.toLowerCase().includes("fecha")) {
         formattedRow[formattedKey] = formatDate(new Date(value));
       } else if (
         rawKey.toLowerCase().includes("precio") ||
