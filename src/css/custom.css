@@ -15,11 +15,20 @@ body {
   --background-color: #ffffff;
 }
 
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--text-color);
+  margin-bottom: 1rem;
+}
+
 #auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 60vh;
+  margin-top: 2rem;
 }
 
 .login-card {

@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+import dataStore from "./dataStore.js";
 
 const supabaseUrl = "https://ibccdlzhptosofuahsxb.supabase.co";
 const supabaseKey =
@@ -19,7 +20,9 @@ async function getSession() {
 }
 
 function onAuthChange(callback) {
-  const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event) => {
+  const {
+    data: { subscription },
+  } = supabaseClient.auth.onAuthStateChange((event) => {
     callback(event);
   });
   return subscription;
@@ -90,14 +93,16 @@ async function fetchTables() {
     tables.map(async (table) => {
       try {
         const records = await fetchRecords(table);
-        localStorage.setItem(table, JSON.stringify(records));
+        dataStore.setTable(table, records);
       } catch (error) {
-        console.warn(`Error al obtener los registros de la tabla ${table}: ${error.message}`);
+        console.warn(
+          `Error al obtener los registros de la tabla ${table}: ${error.message}`,
+        );
       }
-    })
+    }),
   );
 
-  localStorage.setItem("tables", JSON.stringify(tables));
+  console.log("Tablas almacenadas en dataStore.");
 }
 
 export {

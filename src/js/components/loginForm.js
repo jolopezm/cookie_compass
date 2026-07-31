@@ -20,13 +20,13 @@ class LoginForm extends BaseComponent {
               <input type="password" id="password" name="password"
                      placeholder="••••••••" required autocomplete="current-password">
             </label>
-            <details name="example" open>
+            <details name="example">
               <summary>No tienes cuenta?</summary>
-              <p>Contacta al administrador para proporcionarte una.</p>
+              <small>Contacta al administrador para proporcionarte una.</small>
             </details>
-            <details name="example" open>
+            <details name="example">
               <summary>Olvidé mi contraseña</summary>
-              <p>Contacta al administrador para recuperar tu contraseña.</p>
+              <small>Contacta al administrador para recuperar tu contraseña.</small>
             </details>
             <div id="login-error" class="error-message" hidden></div>
             <button type="submit">Iniciar Sesión</button>

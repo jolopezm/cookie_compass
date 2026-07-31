@@ -13,6 +13,7 @@ import "./components/confirmDialog.js";
 import "./components/modalPreviewExportCSV.js";
 import "./components/alertDialog.js";
 import "./components/loginForm.js";
+import dataStore from "./dataStore.js";
 
 let currentSelectedTable = "";
 const READ_ONLY_TABLES = new Set([
@@ -62,7 +63,7 @@ async function initTables(selectElement) {
 function loadTable(tableName) {
   currentSelectedTable = tableName;
 
-  const rawData = JSON.parse(localStorage.getItem(tableName)) || [];
+  const rawData = dataStore.getTable(tableName) || [];
   const formattedData = formatTableData(rawData);
 
   const actionMenu = document.querySelector("action-menu");

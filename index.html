@@ -8,27 +8,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
   <body class="container">
-    <nav>
-      <ul>
-        <li><strong>🧭 COOKIE COMPASS</strong></li>
-      </ul>
-      <ul id="user-info" hidden>
-        <li>
-          <details class="dropdown">
-            <summary><span id="user-email"></span></summary>
-            <ul>
-              <li><a href="#" id="logout-btn">Cerrar Sesión</a></li>
-            </ul>
-          </details>
-        </li>
-      </ul>
-    </nav>
-
     <div id="auth-container" hidden>
       <login-form></login-form>
     </div>
 
     <main id="app-content" hidden>
+      <nav>
+        <ul>
+          <li><strong>🧭 COOKIE COMPASS</strong></li>
+        </ul>
+        <ul id="user-info" hidden>
+          <li>
+            <details class="dropdown">
+              <summary><span id="user-email"></span></summary>
+              <ul>
+                <li><a href="#" id="logout-btn">Cerrar Sesión</a></li>
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </nav>
+
       <section id="table-editor">
         <div id="table-controls">
           <div id="table-controls-top">
@@ -47,7 +47,9 @@
         <section id="table-container"></section>
       </section>
 
-      <button id="btn-export-csv">Exportar como CSV</button>
+      <button id="btn-export-csv" style="display: block; margin-left: auto">
+        Exportar como CSV
+      </button>
     </main>
 
     <modal-new-record id="new-record-modal"></modal-new-record>
