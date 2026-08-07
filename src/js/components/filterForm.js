@@ -98,7 +98,9 @@ class FilterForm extends ModalBase {
   setupListeners() {
     super.setupListeners();
 
-    this.qs(".add-filter")?.addEventListener("click", () => this.addFilterRow());
+    this.qs(".add-filter")?.addEventListener("click", () =>
+      this.addFilterRow(),
+    );
     this.qs(".apply-filters")?.addEventListener("click", () => {
       this.apply();
       this.close();
@@ -221,7 +223,18 @@ class FilterForm extends ModalBase {
     const table = document.querySelector("data-table");
     if (!table || !table._fullData) return;
 
-    let data = [...table._fullData];
+    const sourceFormattedData = Array.isArray(table._sourceFullData)
+      ? table._sourceFullData
+      : table._fullData;
+    const sourceRawData = Array.isArray(table._sourceRawData)
+      ? table._sourceRawData
+      : table._rawData || sourceFormattedData;
+    const tableName = table._sourceTableName || table._tableName || "";
+
+    let data = sourceFormattedData.map((formattedRow, index) => ({
+      formattedRow,
+      rawRow: sourceRawData[index] ?? null,
+    }));
     const rows = this.qsa(".filter-row");
 
     rows.forEach((row) => {
@@ -239,8 +252,8 @@ class FilterForm extends ModalBase {
       const isDate = this.isDateField(field);
       const isNumeric = this.isNumericField(field);
 
-      data = data.filter((item) => {
-        const cellValue = item[field];
+      data = data.filter(({ formattedRow }) => {
+        const cellValue = formattedRow[field];
 
         if (isDate) {
           return this.matchDate(cellValue, operator, value, value2);
@@ -261,15 +274,32 @@ class FilterForm extends ModalBase {
       const isNumeric = this.isNumericField(orderField);
 
       data.sort((a, b) => {
-        const valA = this.parseSortValue(a[orderField], isDate, isNumeric);
-        const valB = this.parseSortValue(b[orderField], isDate, isNumeric);
+        const valA = this.parseSortValue(
+          a.formattedRow[orderField],
+          isDate,
+          isNumeric,
+        );
+        const valB = this.parseSortValue(
+          b.formattedRow[orderField],
+          isDate,
+          isNumeric,
+        );
         if (valA < valB) return orderDir === "asc" ? -1 : 1;
         if (valA > valB) return orderDir === "asc" ? 1 : -1;
         return 0;
       });
     }
 
-    table.setData(data);
+    const filteredFormattedData = data.map(({ formattedRow }) => formattedRow);
+    const filteredRawData = data.map(({ rawRow }) => rawRow);
+
+    table._fullData = sourceFormattedData;
+    table._rawData = sourceRawData;
+    table._tableName = tableName;
+    table.setData(filteredFormattedData, {
+      rawData: filteredRawData,
+      tableName,
+    });
   }
 
   matchDate(cellValue, operator, value, value2) {
@@ -387,8 +417,16 @@ class FilterForm extends ModalBase {
 
   clear() {
     const table = document.querySelector("data-table");
-    if (table && table._fullData) {
-      table.setData([...table._fullData]);
+    if (table && table._sourceFullData) {
+      table._fullData = table._sourceFullData;
+      table._rawData = table._sourceRawData || table._sourceFullData;
+      table._tableName = table._sourceTableName || table._tableName || "";
+      table.setData([...table._sourceFullData], {
+        rawData: Array.isArray(table._sourceRawData)
+          ? [...table._sourceRawData]
+          : [...table._sourceFullData],
+        tableName: table._sourceTableName || table._tableName || "",
+      });
     }
 
     const rows = this.qsa(".filter-row");
@@ -411,8 +449,8 @@ class FilterForm extends ModalBase {
   }
 
   resetFields() {
-    this.clear();
     this.refreshFields();
+    this.clear();
   }
 }
 

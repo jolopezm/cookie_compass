@@ -1,15 +1,21 @@
 import { BaseComponent } from "./baseComponent.js";
 import { escapeHTML } from "../utils/escapeHTML.js";
+import { formatPrice } from "../tableManager.js";
 
 class DataTable extends BaseComponent {
   constructor() {
     super({ useShadowDOM: false });
     this.data = [];
+    this.rawData = [];
+    this.tableName = "";
     this.selectedIds = new Set();
   }
 
-  setData(data) {
+  setData(data, options = {}) {
     this.data = Array.isArray(data) ? data : [];
+    this.rawData = Array.isArray(options.rawData) ? options.rawData : this.data;
+    this.tableName =
+      typeof options.tableName === "string" ? options.tableName : "";
     this.selectedIds.clear();
     this.render();
   }
@@ -24,6 +30,50 @@ class DataTable extends BaseComponent {
 
   getSelectedIds() {
     return Array.from(this.selectedIds);
+  }
+
+  isSalesView() {
+    return this.tableName === "vista_ventas";
+  }
+
+  normalizeKey(key) {
+    return String(key)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
+  resolveSalesTotalKey() {
+    if (!Array.isArray(this.rawData) || this.rawData.length === 0) {
+      return null;
+    }
+
+    const keys = Object.keys(this.rawData[0]);
+    const normalizedCandidates = keys
+      .map((key) => ({ key, normalized: this.normalizeKey(key) }))
+      .filter(({ normalized }) => normalized.includes("total"));
+
+    const prioritized = normalizedCandidates.find(({ normalized }) =>
+      normalized.includes("orden"),
+    );
+
+    return (prioritized || normalizedCandidates[0] || {}).key || null;
+  }
+
+  getSalesTotal() {
+    if (!this.isSalesView()) {
+      return 0;
+    }
+
+    const totalKey = this.resolveSalesTotalKey();
+    if (!totalKey) {
+      return 0;
+    }
+
+    return this.rawData.reduce((sum, row) => {
+      return sum + (parseFloat(row[totalKey]) || 0);
+    }, 0);
   }
 
   render() {
@@ -62,8 +112,18 @@ class DataTable extends BaseComponent {
         </table>
       </div>
       <div class="table-footer">
-        <span>Filas: <strong class="total-rows-count">${this.data.length}</strong></span>
-        <span>Seleccionadas: <strong class="selected-rows-count">0</strong></span>
+        ${
+          this.isSalesView()
+            ? `<div class="table-footer-row table-sales-summary" aria-live="polite">
+                <span>Total ventas del periodo</span>
+                <strong class="sales-total-value">$${escapeHTML(this.getSalesTotal())}</strong>
+              </div>`
+            : ""
+        }
+        <div class="table-footer-row table-footer-stats">
+          <span>Filas: <strong class="total-rows-count">${this.data.length}</strong></span>
+          <span>Seleccionadas: <strong class="selected-rows-count">0</strong></span>
+        </div>
       </div>
     `;
 
@@ -74,8 +134,12 @@ class DataTable extends BaseComponent {
   updateFooter() {
     const totalEl = this.qs(".total-rows-count");
     const selectedEl = this.qs(".selected-rows-count");
+    const salesTotalEl = this.qs(".sales-total-value");
     if (totalEl) totalEl.textContent = this.data.length;
     if (selectedEl) selectedEl.textContent = this.selectedIds.size;
+    if (salesTotalEl) {
+      salesTotalEl.textContent = `$${formatPrice(this.getSalesTotal())}`;
+    }
   }
 
   setupListeners() {

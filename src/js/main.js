@@ -78,16 +78,21 @@ function loadTable(tableName) {
     filterForm.resetFields();
   }
 
-  renderTable(formattedData);
+  renderTable(formattedData, rawData, tableName);
 }
 
-function renderTable(data) {
+function renderTable(data, rawData, tableName) {
   const container = document.getElementById("table-container");
   if (!container) return;
 
   const table = document.createElement("data-table");
   table._fullData = data;
-  table.setData(data);
+  table._rawData = rawData;
+  table._tableName = tableName;
+  table._sourceFullData = data;
+  table._sourceRawData = rawData;
+  table._sourceTableName = tableName;
+  table.setData(data, { rawData, tableName });
 
   container.innerHTML = "";
   container.appendChild(table);
