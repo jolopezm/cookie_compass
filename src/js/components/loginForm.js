@@ -7,7 +7,7 @@ class LoginForm extends BaseComponent {
       <div class="login-container">
         <article class="login-card">
           <header>
-              <h3>Inicia sesión para continuar</h3>
+              <h3>Inicia sesión</h3>
           </header>
           <form id="login-form">
             <label for="email">
@@ -17,8 +17,11 @@ class LoginForm extends BaseComponent {
             </label>
             <label for="password">
               Contraseña
-              <input type="password" id="password" name="password"
+                     <fieldset role="group">
+    <input type="password" id="password" name="password"
                      placeholder="••••••••" required autocomplete="current-password">
+    <button type="button" id="toggle-password" aria-label="Mostrar contraseña">👁️</button>
+  </fieldset>
             </label>
             <details name="example">
               <summary>No tienes cuenta?</summary>
@@ -39,6 +42,10 @@ class LoginForm extends BaseComponent {
   setupListeners() {
     this.qs("#login-form").addEventListener("submit", (e) =>
       this.handleSubmit(e),
+    );
+
+    this.qs("#toggle-password").addEventListener("click", () =>
+      this.togglePasswordVisibility(),
     );
   }
 
@@ -66,6 +73,19 @@ class LoginForm extends BaseComponent {
     const el = this.qs("#login-error");
     el.textContent = "";
     el.hidden = true;
+  }
+
+  async togglePasswordVisibility() {
+    const passwordInput = this.qs("#password");
+    const toggleButton = this.qs("#toggle-password");
+
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+      toggleButton.textContent = "🙈";
+    } else {
+      passwordInput.type = "password";
+      toggleButton.textContent = "👁️";
+    }
   }
 
   async handleSubmit(e) {
