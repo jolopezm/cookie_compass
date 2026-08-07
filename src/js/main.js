@@ -13,9 +13,12 @@ import "./components/confirmDialog.js";
 import "./components/modalPreviewExportCSV.js";
 import "./components/alertDialog.js";
 import "./components/loginForm.js";
+import "./components/salesChartView.js";
 import dataStore from "./dataStore.js";
 
 let currentSelectedTable = "";
+let currentViewMode = "table";
+let viewToggleReady = false;
 const DEFAULT_TABLES = [
   "clientes",
   "productos",
@@ -34,6 +37,59 @@ function showAlert(message, type = "error") {
   if (dialog && typeof dialog.show === "function") {
     dialog.show({ message, type });
   }
+}
+
+function getSalesChartView() {
+  return document.getElementById("sales-chart-view");
+}
+
+function refreshSalesChart() {
+  const chartView = getSalesChartView();
+  if (chartView && typeof chartView.setData === "function") {
+    chartView.setData(dataStore.getTable("vista_ventas") || []);
+  }
+}
+
+function updateViewToggleButtons() {
+  document.querySelectorAll("[data-view-mode]").forEach((button) => {
+    const active = button.dataset.viewMode === currentViewMode;
+    button.classList.toggle("contrast", active);
+    button.classList.toggle("outline", !active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function setViewMode(mode) {
+  currentViewMode = mode;
+
+  const tableView = document.getElementById("table-view");
+  const chartView = document.getElementById("chart-view");
+  const exportBtn = document.getElementById("btn-export-csv");
+
+  const chartVisible = mode === "chart";
+
+  if (tableView) tableView.hidden = chartVisible;
+  if (chartView) chartView.hidden = !chartVisible;
+  if (exportBtn) exportBtn.hidden = chartVisible;
+
+  updateViewToggleButtons();
+
+  if (chartVisible) {
+    refreshSalesChart();
+  }
+}
+
+function setupViewToggle() {
+  if (viewToggleReady) return;
+  viewToggleReady = true;
+
+  document.querySelectorAll("[data-view-mode]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setViewMode(button.dataset.viewMode || "table");
+    });
+  });
+
+  updateViewToggleButtons();
 }
 
 async function initTables(selectElement) {
@@ -150,6 +206,7 @@ function setupActionMenu() {
       }
       await fetchTables();
       await loadTable(currentSelectedTable);
+      refreshSalesChart();
     } catch (error) {
       console.error("❌ Error eliminando registros:", error);
       console.error("Detalles:", JSON.stringify(error, null, 2));
@@ -209,6 +266,7 @@ function setupModalEvents() {
         await createRecord(payload, tableName);
         await fetchTables();
         await loadTable(currentSelectedTable);
+        refreshSalesChart();
       }
     } catch (error) {
       console.error("❌ Error guardando registro en Supabase:", error);
@@ -224,6 +282,7 @@ function setupModalEvents() {
         await updateRecord(id, payload, tableName);
         await fetchTables();
         await loadTable(currentSelectedTable);
+        refreshSalesChart();
       }
     } catch (error) {
       console.error("❌ Error actualizando registro en Supabase:", error);
@@ -233,6 +292,7 @@ function setupModalEvents() {
 
   modal.addEventListener("record-created", async () => {
     await loadTable(currentSelectedTable);
+    refreshSalesChart();
   });
 
   modal.addEventListener("alert", (e) => {
@@ -322,10 +382,13 @@ async function init() {
     if (tableName) {
       loadTable(tableName);
     }
+    setupViewToggle();
     setupTableSelector(tableSelector);
     setupActionMenu();
     setupModalEvents();
     setupExportCSVButton();
+    refreshSalesChart();
+    setViewMode(currentViewMode);
   });
 }
 

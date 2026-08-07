@@ -30,21 +30,77 @@
       </nav>
 
       <section id="table-editor">
-        <div id="table-controls">
-          <div id="table-controls-top">
-            <select
-              name="selector-tabla"
-              aria-label="Seleccionar tabla"
-              required
-              id="table-selector"
-            ></select>
-          </div>
-          <div id="table-controls-bottom">
-            <filter-form id="filter-form"></filter-form>
-          </div>
+        <div id="view-toggle" role="group" aria-label="Cambiar vista">
+          <button type="button" class="secondary" data-view-mode="table">
+            Base de datos
+          </button>
+          <button type="button" class="outline" data-view-mode="chart">
+            Gráfico de ventas
+          </button>
         </div>
 
-        <section id="table-container"></section>
+        <section id="table-view">
+          <div id="table-view-switcher">
+            <div id="table-toolbar" aria-label="Selección de tabla y acciones">
+              <select
+                name="selector-tabla"
+                aria-label="Seleccionar tabla"
+                required
+                id="table-selector"
+              ></select>
+              <div id="table-controls-top">
+                <action-menu></action-menu>
+              </div>
+            </div>
+          </div>
+
+          <div id="table-controls">
+            <div id="table-controls-bottom">
+              <filter-form id="filter-form"></filter-form>
+            </div>
+          </div>
+
+          <section id="table-container"></section>
+        </section>
+
+        <section id="chart-view" hidden>
+          <div id="sales-chart-controls">
+            <label for="sales-chart-month">
+              Mes
+              <select id="sales-chart-month" name="sales-chart-month">
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3">Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11">Diciembre</option>
+              </select>
+            </label>
+            <label for="sales-chart-year">
+              Año
+              <select id="sales-chart-year" name="sales-chart-year">
+                <option value="2026" selected>2026</option>
+              </select>
+            </label>
+            <label for="sales-chart-all-year">
+              Ver todo el año
+              <input
+                type="checkbox"
+                role="switch"
+                id="sales-chart-all-year"
+                name="sales-chart-all-year"
+              />
+            </label>
+          </div>
+
+          <sales-chart-view id="sales-chart-view"></sales-chart-view>
+        </section>
       </section>
 
       <button id="btn-export-csv" style="display: block; margin-left: auto">

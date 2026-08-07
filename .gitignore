@@ -19,3 +19,9 @@ config/local_settings.json
 dist/
 build/
 out/
+
+.gga
+.skill-registry.cache.json
+.skill-registry.md
+
+.atl/skill-registry.md
