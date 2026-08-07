@@ -1,9 +1,8 @@
-import fs from "node:fs";
-
 class DataStore {
   constructor() {
     if (!DataStore.instance) {
       this.cache = new Map();
+      this.tableNames = [];
       DataStore.instance = this;
     }
 
@@ -18,12 +17,24 @@ class DataStore {
     return this.cache.get(tableName) || [];
   }
 
+  setTables(tableNames) {
+    this.tableNames.length = 0;
+    if (Array.isArray(tableNames)) {
+      this.tableNames.push(...tableNames);
+    }
+  }
+
+  getTables() {
+    return [...this.tableNames];
+  }
+
   hasTable(tableName) {
     return this.cache.has(tableName);
   }
 
   clear() {
     this.cache.clear();
+    this.tableNames.length = 0;
   }
 }
 

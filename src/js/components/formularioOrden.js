@@ -1,6 +1,7 @@
 import { BaseComponent } from "./baseComponent.js";
 import { procesarCreacionOrden } from "../ordenes.js";
 import { formatPrice } from "../tableManager.js";
+import dataStore from "../dataStore.js";
 
 class FormularioOrden extends BaseComponent {
   connectedCallback() {
@@ -41,7 +42,7 @@ class FormularioOrden extends BaseComponent {
 
     if (!selectorCliente || !productosContainer) return;
 
-    const clientes = JSON.parse(localStorage.getItem("clientes")) || [];
+    const clientes = dataStore.getTable("clientes") || [];
     selectorCliente.innerHTML = `<option value="" disabled selected>-- Elija un cliente --</option>`;
     clientes.forEach((cliente) => {
       const opt = document.createElement("option");
@@ -50,7 +51,7 @@ class FormularioOrden extends BaseComponent {
       selectorCliente.appendChild(opt);
     });
 
-    const productos = JSON.parse(localStorage.getItem("productos")) || [];
+    const productos = dataStore.getTable("productos") || [];
     productosContainer.innerHTML = "";
 
     if (productos.length === 0) {
@@ -119,7 +120,10 @@ class FormularioOrden extends BaseComponent {
       } catch (error) {
         const alertDialog = document.getElementById("alert-dialog");
         if (alertDialog && typeof alertDialog.show === "function") {
-          alertDialog.show({ message: `Error al crear la orden: ${error.message}`, type: "error" });
+          alertDialog.show({
+            message: `Error al crear la orden: ${error.message}`,
+            type: "error",
+          });
         }
         console.error("Error al procesar orden:", error);
       }

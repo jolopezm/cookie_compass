@@ -16,6 +16,13 @@ import "./components/loginForm.js";
 import dataStore from "./dataStore.js";
 
 let currentSelectedTable = "";
+const DEFAULT_TABLES = [
+  "clientes",
+  "productos",
+  "ordenes",
+  "detalle_ordenes",
+  "vista_ventas",
+];
 const READ_ONLY_TABLES = new Set([
   "ordenes",
   "detalle_ordenes",
@@ -31,7 +38,7 @@ function showAlert(message, type = "error") {
 
 async function initTables(selectElement) {
   try {
-    await fetchTables();
+    await fetchTables(DEFAULT_TABLES);
   } catch (err) {
     console.warn(
       "⚠️ No se pudo sincronizar con Supabase, usando datos en caché.",
@@ -39,17 +46,12 @@ async function initTables(selectElement) {
     );
   }
 
-  const tables = JSON.parse(localStorage.getItem("tables")) || [
-    "clientes",
-    "productos",
-    "ordenes",
-    "detalle_ordenes",
-    "vista_ventas",
-  ];
+  const tables = dataStore.getTables();
+  const tableList = tables.length > 0 ? tables : DEFAULT_TABLES;
 
   selectElement.innerHTML = "";
 
-  tables.forEach((table) => {
+  tableList.forEach((table) => {
     const option = document.createElement("option");
     option.value = table;
     option.textContent =
@@ -57,7 +59,7 @@ async function initTables(selectElement) {
     selectElement.appendChild(option);
   });
 
-  return tables[0];
+  return tableList[0];
 }
 
 function loadTable(tableName) {
@@ -167,8 +169,7 @@ function setupActionMenu() {
       return;
     }
 
-    const rawData =
-      JSON.parse(localStorage.getItem(currentSelectedTable)) || [];
+    const rawData = dataStore.getTable(currentSelectedTable) || [];
     const record = rawData.find(
       (r) => r.id === selectedIds[0] || String(r.id) === selectedIds[0],
     );
@@ -248,12 +249,11 @@ function setupExportCSVButton() {
 
   exportBtn.addEventListener("click", () => {
     const modal = document.querySelector("modal-preview-export-csv");
-    const tables = JSON.parse(localStorage.getItem("tables")) || [];
     if (modal && typeof modal.setDataPreview === "function") {
       modal.setTitle(
         `Vista previa de: ${currentSelectedTable.charAt(0).toUpperCase() + currentSelectedTable.slice(1)}`,
       );
-      const data = JSON.parse(localStorage.getItem(currentSelectedTable)) || [];
+      const data = dataStore.getTable(currentSelectedTable) || [];
       modal.setCurrentTableName(currentSelectedTable);
       modal.setDataPreview(data);
       modal.showDialog();

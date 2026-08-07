@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@picocss/pico": "^2.1.1",
-    "@supabase/supabase-js": "^2.111.0"
+    "@supabase/supabase-js": "^2.111.0",
+    "dotenv": "^17.4.2"
   }
 }

@@ -1,4 +1,5 @@
 import { BaseComponent } from "./baseComponent.js";
+import { escapeHTML } from "../utils/escapeHTML.js";
 
 class DataTable extends BaseComponent {
   constructor() {
@@ -41,7 +42,7 @@ class DataTable extends BaseComponent {
               <th style="width: 40px;">
                 <input type="checkbox" id="select-all" aria-label="Seleccionar todo" />
               </th>
-              ${headers.map((h) => `<th>${h}</th>`).join("")}
+              ${headers.map((h) => `<th>${escapeHTML(h)}</th>`).join("")}
             </tr>
           </thead>
           <tbody>
@@ -50,9 +51,9 @@ class DataTable extends BaseComponent {
                 (row, idx) => `
               <tr>
                 <td>
-                  <input type="checkbox" class="row-checkbox" data-id="${row.id ?? idx}" aria-label="Seleccionar fila" />
+                  <input type="checkbox" class="row-checkbox" data-id="${escapeHTML(row.id ?? idx)}" aria-label="Seleccionar fila" />
                 </td>
-                ${headers.map((h) => `<td>${row[h] ?? ""}</td>`).join("")}
+                ${headers.map((h) => `<td>${escapeHTML(row[h] ?? "")}</td>`).join("")}
               </tr>
             `,
               )

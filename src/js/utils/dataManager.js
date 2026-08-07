@@ -1,3 +1,15 @@
+import dataStore from "../dataStore.js";
+
+function sanitizeCSVValue(value) {
+  let text = String(value ?? "");
+
+  if (/^[=+\-@]/.test(text)) {
+    text = `'${text}`;
+  }
+
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
 function transformDataToCSV(data) {
   if (!data || !Array.isArray(data)) return "";
 
@@ -5,10 +17,7 @@ function transformDataToCSV(data) {
   const csvRows = [headers.join(",")];
 
   for (const row of data) {
-    const values = headers.map((header) => {
-      const value = row[header] ?? "";
-      return `"${String(value).replace(/"/g, '""')}"`;
-    });
+    const values = headers.map((header) => sanitizeCSVValue(row[header] ?? ""));
     csvRows.push(values.join(","));
   }
 
@@ -16,7 +25,7 @@ function transformDataToCSV(data) {
 }
 
 function downloadCSV(tableName) {
-  const rawData = JSON.parse(localStorage.getItem(tableName)) || [];
+  const rawData = dataStore.getTable(tableName) || [];
   const csvContent = transformDataToCSV(rawData);
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");

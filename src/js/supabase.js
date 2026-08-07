@@ -1,11 +1,33 @@
 import { createClient } from "@supabase/supabase-js";
 import dataStore from "./dataStore.js";
 
-const supabaseUrl = "https://ibccdlzhptosofuahsxb.supabase.co";
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImliY2NkbHpocHRvc29mdWFoc3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1ODAxNTcsImV4cCI6MjEwMDE1NjE1N30.pY41HzxkrTnUrgi5_xGKVdy3-BSeqVqRDjpmPUMfndQ";
+const DEFAULT_TABLES = [
+  "clientes",
+  "productos",
+  "ordenes",
+  "detalle_ordenes",
+  "vista_ventas",
+];
+const ALLOWED_TABLES = new Set(DEFAULT_TABLES);
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+function assertAllowedTable(tableName) {
+  if (typeof tableName !== "string" || !ALLOWED_TABLES.has(tableName)) {
+    throw new Error(`Tabla no permitida: ${tableName}`);
+  }
+}
+
+function assertAllowedTables(tables) {
+  if (!Array.isArray(tables)) {
+    throw new Error("Se esperaba una lista de tablas permitidas.");
+  }
+
+  tables.forEach(assertAllowedTable);
+}
 
 async function signIn(email, password) {
   return supabaseClient.auth.signInWithPassword({ email, password });
@@ -29,6 +51,8 @@ function onAuthChange(callback) {
 }
 
 async function fetchRecords(tableName) {
+  assertAllowedTable(tableName);
+
   const { data: fetchedRecords, error } = await supabaseClient
     .from(tableName)
     .select("*");
@@ -40,6 +64,8 @@ async function fetchRecords(tableName) {
 }
 
 async function createRecord(payload, tableName) {
+  assertAllowedTable(tableName);
+
   const { data: insertedRecord, error } = await supabaseClient
     .from(tableName)
     .insert([payload])
@@ -53,6 +79,8 @@ async function createRecord(payload, tableName) {
 }
 
 async function updateRecord(id, payload, tableName) {
+  assertAllowedTable(tableName);
+
   const { data: updatedRecord, error } = await supabaseClient
     .from(tableName)
     .update(payload)
@@ -67,6 +95,8 @@ async function updateRecord(id, payload, tableName) {
 }
 
 async function deleteRecord(id, tableName) {
+  assertAllowedTable(tableName);
+
   const { data: deletedRecord, error } = await supabaseClient
     .from(tableName)
     .delete()
@@ -80,14 +110,8 @@ async function deleteRecord(id, tableName) {
   return deletedRecord;
 }
 
-async function fetchTables() {
-  const tables = [
-    "clientes",
-    "productos",
-    "ordenes",
-    "detalle_ordenes",
-    "vista_ventas",
-  ];
+async function fetchTables(tables = DEFAULT_TABLES) {
+  assertAllowedTables(tables);
 
   await Promise.all(
     tables.map(async (table) => {
@@ -102,11 +126,14 @@ async function fetchTables() {
     }),
   );
 
+  dataStore.setTables(tables);
+
   console.log("Tablas almacenadas en dataStore.");
 }
 
 export {
   supabaseClient,
+  DEFAULT_TABLES,
   signIn,
   signOut,
   getSession,

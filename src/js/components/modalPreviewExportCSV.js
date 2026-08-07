@@ -1,5 +1,6 @@
 import { ModalBase } from "./modalBase.js";
 import { downloadCSV } from "../utils/dataManager.js";
+import { escapeHTML } from "../utils/escapeHTML.js";
 
 class ModalPreviewExportCSV extends ModalBase {
   constructor() {
@@ -22,7 +23,7 @@ class ModalPreviewExportCSV extends ModalBase {
               ${
                 data.length > 0
                   ? Object.keys(data[0])
-                      .map((h) => `<th>${h}</th>`)
+                      .map((h) => `<th>${escapeHTML(h)}</th>`)
                       .join("")
                   : ""
               }
@@ -34,7 +35,7 @@ class ModalPreviewExportCSV extends ModalBase {
                 (row) => `
               <tr>
                 ${Object.values(row)
-                  .map((value) => `<td>${value ?? ""}</td>`)
+                  .map((value) => `<td>${escapeHTML(value ?? "")}</td>`)
                   .join("")}
               </tr>
             `,
