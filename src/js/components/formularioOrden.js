@@ -2,6 +2,7 @@ import { BaseComponent } from "./baseComponent.js";
 import { procesarCreacionOrden } from "../ordenes.js";
 import { formatPrice } from "../tableManager.js";
 import dataStore from "../dataStore.js";
+import { escapeHTML } from "../utils/escapeHTML.js";
 
 class FormularioOrden extends BaseComponent {
   connectedCallback() {
@@ -61,16 +62,19 @@ class FormularioOrden extends BaseComponent {
 
     productos.forEach((prod) => {
       const row = document.createElement("div");
+      const productId = escapeHTML(prod.id);
+      const productName = escapeHTML(prod.nombre);
+      const productPrice = Number(prod.precio) || 0;
       row.className = "grid";
       row.style.cssText =
         "align-items: center; grid-template-columns: 1fr 120px; gap: 1rem; margin-bottom: 0.5rem;";
 
       row.innerHTML = `
         <label style="margin-bottom: 0; cursor: pointer;">
-          <input type="checkbox" class="checkbox-producto" data-id="${prod.id}" data-precio="${prod.precio}" />
-          <strong>${prod.nombre}</strong> ($${parseFloat(prod.precio).toFixed(2)})
+          <input type="checkbox" class="checkbox-producto" data-id="${productId}" data-precio="${productPrice}" />
+          <strong>${productName}</strong> ($${productPrice.toFixed(2)})
         </label>
-        <input type="number" min="1" value="1" class="cantidad-producto" data-id="${prod.id}" disabled style="margin-bottom: 0;" placeholder="Cant." />
+        <input type="number" min="1" value="1" class="cantidad-producto" data-id="${productId}" disabled style="margin-bottom: 0;" placeholder="Cant." />
       `;
       productosContainer.appendChild(row);
     });
@@ -118,13 +122,9 @@ class FormularioOrden extends BaseComponent {
         const result = await procesarCreacionOrden(this.qs("form"));
         this.emit("form-submit", { tableName: "ordenes", result });
       } catch (error) {
-        const alertDialog = document.getElementById("alert-dialog");
-        if (alertDialog && typeof alertDialog.show === "function") {
-          alertDialog.show({
-            message: `Error al crear la orden: ${error.message}`,
-            type: "error",
-          });
-        }
+        this.emit("record-create-failed", {
+          message: `Error al crear la orden: ${error.message}`,
+        });
         console.error("Error al procesar orden:", error);
       }
     });

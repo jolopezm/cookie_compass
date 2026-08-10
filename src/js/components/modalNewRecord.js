@@ -75,7 +75,14 @@ class ModalNewRecord extends ModalBase {
 
   async handleSubmit(detail) {
     try {
-      if (detail.tableName !== "ordenes") {
+      if (detail.tableName === "ordenes") {
+        this.emit("record-created", {
+          tableName: detail.tableName,
+          record: detail.result,
+        });
+        this.editData = null;
+        this.close();
+      } else {
         const eventName = detail.id ? "update-record" : "save-record";
         this.emit(eventName, {
           tableName: detail.tableName,
@@ -83,10 +90,6 @@ class ModalNewRecord extends ModalBase {
           id: detail.id,
         });
       }
-
-      this.emit("record-created", { tableName: detail.tableName });
-      this.editData = null;
-      this.close();
     } catch (error) {
       this.emit("alert", { message: `Error al guardar: ${error.message}`, type: "error" });
       console.error("Error al procesar formulario:", error);

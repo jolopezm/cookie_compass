@@ -1,4 +1,5 @@
 import { ModalBase } from "./modalBase.js";
+import { escapeHTML } from "../utils/escapeHTML.js";
 
 class FilterForm extends ModalBase {
   constructor() {
@@ -26,7 +27,7 @@ class FilterForm extends ModalBase {
 
   fieldOptions() {
     return this.fields
-      .map((f) => `<option value="${f}">${f}</option>`)
+      .map((f) => `<option value="${escapeHTML(f)}">${escapeHTML(f)}</option>`)
       .join("");
   }
 
@@ -34,16 +35,16 @@ class FilterForm extends ModalBase {
     return `
       <div class="filter-row" style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem;">
         <div role="group" style="flex:1; display:flex;">
-          <select class="filter-field" style="flex:2; margin-bottom:0;">
+          <select class="filter-field" aria-label="Campo del filtro" style="flex:2; margin-bottom:0;">
             <option value="">-- Campo --</option>
             ${this.fieldOptions()}
           </select>
-          <select class="filter-operator" style="flex:1; margin-bottom:0;">
+          <select class="filter-operator" aria-label="Operador del filtro" style="flex:1; margin-bottom:0;">
             <option value="">-- Operador --</option>
           </select>
-          <input type="text" class="filter-value" placeholder="Valor" style="flex:1; margin-bottom:0;" />
-          <input type="text" class="filter-value2" placeholder="y" style="flex:0 0 80px; margin-bottom:0; display:none;" />
-          <button class="remove-filter" title="Eliminar filtro">
+          <input type="text" class="filter-value" aria-label="Valor del filtro" placeholder="Valor" style="flex:1; margin-bottom:0;" />
+          <input type="text" class="filter-value2" aria-label="Segundo valor del filtro" placeholder="y" style="flex:0 0 80px; margin-bottom:0; display:none;" />
+          <button type="button" class="remove-filter" title="Eliminar filtro" aria-label="Eliminar filtro">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 6h18"/>
               <path d="M8 6v-2h8v2"/>
@@ -68,18 +69,18 @@ class FilterForm extends ModalBase {
           <div class="filter-rows">
             ${this.renderFilterRow()}
           </div>
-          <button class="add-filter secondary outline" style="font-size:0.875rem; width:auto;">+ Agregar filtro</button>
+          <button type="button" class="add-filter secondary outline" style="font-size:0.875rem; width:auto;">+ Agregar filtro</button>
 
           <hr style="margin:0.75rem 0;" />
 
           <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
             <label style="margin-bottom:0; font-weight:bold;">Ordenar por:</label>
             <div role="group" style="flex:1; display:flex;">
-              <select class="order-field" style="margin-bottom:0;">
+              <select class="order-field" aria-label="Campo para ordenar" style="margin-bottom:0;">
                 <option value="">-- Campo --</option>
                 ${this.fieldOptions()}
               </select>
-              <select class="order-direction" style="margin-bottom:0;">
+              <select class="order-direction" aria-label="Dirección del orden" style="margin-bottom:0;">
                 <option value="asc">Ascendente</option>
                 <option value="desc">Descendente</option>
               </select>
@@ -87,8 +88,8 @@ class FilterForm extends ModalBase {
           </div>
 
           <footer style="display:flex; gap:0.5rem; justify-content:flex-end;">
-            <button class="clear-filters secondary outline" style="width:auto;">Limpiar</button>
-            <button class="apply-filters contrast" style="width:auto;">Aplicar</button>
+            <button type="button" class="clear-filters secondary outline" style="width:auto;">Limpiar</button>
+            <button type="button" class="apply-filters contrast" style="width:auto;">Aplicar</button>
           </footer>
         </article>
       </dialog>
@@ -117,8 +118,9 @@ class FilterForm extends ModalBase {
     });
 
     this.qs(".filter-rows")?.addEventListener("click", (e) => {
-      if (e.target.classList.contains("remove-filter")) {
-        const row = e.target.closest(".filter-row");
+      const removeButton = e.target.closest?.(".remove-filter");
+      if (removeButton) {
+        const row = removeButton.closest(".filter-row");
         if (row && this.qsa(".filter-row").length > 1) {
           row.remove();
         }
@@ -199,6 +201,7 @@ class FilterForm extends ModalBase {
         value2Input = document.createElement("input");
         value2Input.type = "text";
         value2Input.className = "filter-value2";
+        value2Input.setAttribute("aria-label", "Segundo valor del filtro");
         value2Input.placeholder = "y";
         value2Input.style.cssText = "flex:0 0 80px; margin-bottom:0;";
         value2Input.name = "filter-value2";
@@ -252,8 +255,9 @@ class FilterForm extends ModalBase {
       const isDate = this.isDateField(field);
       const isNumeric = this.isNumericField(field);
 
-      data = data.filter(({ formattedRow }) => {
-        const cellValue = formattedRow[field];
+      data = data.filter(({ formattedRow, rawRow }) => {
+        const rawField = this.resolveRawField(field, formattedRow, rawRow);
+        const cellValue = rawRow?.[rawField] ?? formattedRow[field];
 
         if (isDate) {
           return this.matchDate(cellValue, operator, value, value2);
@@ -274,13 +278,18 @@ class FilterForm extends ModalBase {
       const isNumeric = this.isNumericField(orderField);
 
       data.sort((a, b) => {
+        const rawField = this.resolveRawField(
+          orderField,
+          a.formattedRow,
+          a.rawRow,
+        );
         const valA = this.parseSortValue(
-          a.formattedRow[orderField],
+          a.rawRow?.[rawField] ?? a.formattedRow[orderField],
           isDate,
           isNumeric,
         );
         const valB = this.parseSortValue(
-          b.formattedRow[orderField],
+          b.rawRow?.[rawField] ?? b.formattedRow[orderField],
           isDate,
           isNumeric,
         );
@@ -300,6 +309,58 @@ class FilterForm extends ModalBase {
       rawData: filteredRawData,
       tableName,
     });
+  }
+
+  resolveRawField(field, formattedRecord, rawRecord) {
+    const formattedFields = Object.keys(formattedRecord || {});
+    const rawFields = Object.keys(rawRecord || {});
+    const fieldIndex = formattedFields.indexOf(field);
+    return fieldIndex >= 0 ? rawFields[fieldIndex] : field;
+  }
+
+  matchesFilterRow(formattedRecord, rawRecord, row) {
+    const field = row.querySelector(".filter-field").value;
+    const operator = row.querySelector(".filter-operator").value;
+    const value = row.querySelector(".filter-value").value.trim();
+    const value2Input = row.querySelector(".filter-value2");
+    const value2 =
+      value2Input && value2Input.style.display !== "none"
+        ? value2Input.value.trim()
+        : null;
+
+    if (!field || !operator || !value) return true;
+    const rawField = this.resolveRawField(field, formattedRecord, rawRecord);
+    const cellValue = rawRecord?.[rawField] ?? formattedRecord[field];
+    if (this.isDateField(field)) {
+      return this.matchDate(cellValue, operator, value, value2);
+    }
+    if (this.isNumericField(field)) {
+      return this.matchNumeric(cellValue, operator, value, value2);
+    }
+    return this.matchText(cellValue, operator, value);
+  }
+
+  ensureRecordVisible(formattedRecord, rawRecord) {
+    const rows = Array.from(this.qsa(".filter-row"));
+    const incompatibleRows = rows.filter(
+      (row) => !this.matchesFilterRow(formattedRecord, rawRecord, row),
+    );
+
+    incompatibleRows.forEach((row) => {
+      if (this.qsa(".filter-row").length > 1) {
+        row.remove();
+        return;
+      }
+      row.querySelector(".filter-field").value = "";
+      row.querySelector(".filter-operator").innerHTML =
+        '<option value="">-- Operador --</option>';
+      row.querySelector(".filter-value").value = "";
+      const value2 = row.querySelector(".filter-value2");
+      if (value2) value2.style.display = "none";
+    });
+
+    this.apply();
+    return incompatibleRows.length;
   }
 
   matchDate(cellValue, operator, value, value2) {

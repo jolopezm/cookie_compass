@@ -30,16 +30,46 @@
       </nav>
 
       <section id="table-editor">
-        <div id="view-toggle" role="group" aria-label="Cambiar vista">
-          <button type="button" class="secondary" data-view-mode="table">
+        <div
+          id="view-toggle"
+          role="tablist"
+          aria-label="Secciones administrativas"
+        >
+          <button
+            type="button"
+            id="tab-database"
+            role="tab"
+            data-view-mode="table"
+            aria-controls="table-view"
+            aria-selected="true"
+          >
             Base de datos
           </button>
-          <button type="button" class="outline" data-view-mode="chart">
+          <button
+            type="button"
+            id="tab-sales"
+            role="tab"
+            data-view-mode="chart"
+            aria-controls="chart-view"
+            aria-selected="false"
+            tabindex="-1"
+          >
             Gráfico de ventas
+          </button>
+          <button
+            type="button"
+            id="tab-frequency"
+            role="tab"
+            data-view-mode="frequency"
+            aria-controls="frequency-view"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            Frecuencia de clientes
           </button>
         </div>
 
-        <section id="table-view">
+        <section id="table-view" role="tabpanel" aria-labelledby="tab-database">
           <div id="table-view-switcher">
             <div id="table-toolbar" aria-label="Selección de tabla y acciones">
               <select
@@ -61,9 +91,15 @@
           </div>
 
           <section id="table-container"></section>
+          <button id="btn-export-csv">Exportar como CSV</button>
         </section>
 
-        <section id="chart-view" hidden>
+        <section
+          id="chart-view"
+          role="tabpanel"
+          aria-labelledby="tab-sales"
+          hidden
+        >
           <div id="sales-chart-controls">
             <label for="sales-chart-month">
               Mes
@@ -84,9 +120,7 @@
             </label>
             <label for="sales-chart-year">
               Año
-              <select id="sales-chart-year" name="sales-chart-year">
-                <option value="2026" selected>2026</option>
-              </select>
+              <select id="sales-chart-year" name="sales-chart-year"></select>
             </label>
             <label for="sales-chart-all-year">
               Ver todo el año
@@ -101,11 +135,20 @@
 
           <sales-chart-view id="sales-chart-view"></sales-chart-view>
         </section>
-      </section>
 
-      <button id="btn-export-csv" style="display: block; margin-left: auto">
-        Exportar como CSV
-      </button>
+        <section
+          id="frequency-view"
+          role="tabpanel"
+          aria-labelledby="tab-frequency"
+          hidden
+        >
+          <customer-frequency-view
+            id="customer-frequency-view"
+          ></customer-frequency-view>
+        </section>
+
+        <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+      </section>
     </main>
 
     <modal-new-record id="new-record-modal"></modal-new-record>

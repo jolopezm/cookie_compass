@@ -5,8 +5,11 @@ import { formatPrice } from "../tableManager.js";
 class SalesChartView extends BaseComponent {
   constructor() {
     super({ useShadowDOM: false });
-    this.rawData = [];
+    this.orders = [];
+    this.details = [];
+    this.products = [];
     this.chart = null;
+    this.controlsInitialized = false;
   }
 
   render() {
@@ -53,10 +56,17 @@ class SalesChartView extends BaseComponent {
     this.renderChart();
   }
 
+  disconnectedCallback() {
+    this.chart?.destroy();
+    this.chart = null;
+  }
+
   setupListeners() {
     const monthSelect = document.getElementById("sales-chart-month");
     const yearSelect = document.getElementById("sales-chart-year");
     const allYearToggle = document.getElementById("sales-chart-all-year");
+
+    this.initializePeriodControls();
 
     if (monthSelect && allYearToggle) {
       monthSelect.disabled = allYearToggle.checked;
@@ -73,17 +83,47 @@ class SalesChartView extends BaseComponent {
     });
   }
 
-  setData(data) {
-    this.rawData = Array.isArray(data) ? data : [];
-    if (!this.hidden) {
+  setData({ orders = [], details = [], products = [] } = {}) {
+    this.orders = orders;
+    this.details = details;
+    this.products = products;
+    this.populateYears();
+    if (!this.closest("[hidden]")) {
       this.renderChart();
     }
   }
 
   refresh() {
-    if (!this.hidden) {
+    if (!this.closest("[hidden]")) {
       this.renderChart();
     }
+  }
+
+  initializePeriodControls() {
+    if (this.controlsInitialized) return;
+    const now = new Date();
+    const monthSelect = document.getElementById("sales-chart-month");
+    if (monthSelect) monthSelect.value = String(now.getMonth());
+    this.populateYears(now.getFullYear());
+    this.controlsInitialized = true;
+  }
+
+  populateYears(initialYear = null) {
+    const yearSelect = document.getElementById("sales-chart-year");
+    if (!yearSelect) return;
+
+    const currentYear = new Date().getFullYear();
+    const selectedYear = initialYear || Number(yearSelect.value) || currentYear;
+    const years = new Set([currentYear, selectedYear]);
+    this.orders.forEach((order) => {
+      const date = this.parseDate(order.fecha_registro);
+      if (date) years.add(date.getFullYear());
+    });
+    yearSelect.innerHTML = Array.from(years)
+      .sort((a, b) => b - a)
+      .map((year) => `<option value="${year}">${year}</option>`)
+      .join("");
+    yearSelect.value = String(selectedYear);
   }
 
   normalizeKey(key) {
@@ -94,55 +134,10 @@ class SalesChartView extends BaseComponent {
       .replace(/[^a-z0-9]+/g, "");
   }
 
-  resolveFieldKey(expectedKeys, fallbackMatcher) {
-    const keys = Object.keys(this.rawData[0] || {});
-    for (const expected of expectedKeys) {
-      const normalizedExpected = this.normalizeKey(expected);
-      const exact = keys.find(
-        (key) => this.normalizeKey(key) === normalizedExpected,
-      );
-      if (exact) return exact;
-    }
-
-    return keys.find((key) => fallbackMatcher(this.normalizeKey(key))) || "";
-  }
-
   parseDate(value) {
     if (!value) return null;
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  resolveDatasetKeys() {
-    const dateKey = this.resolveFieldKey(
-      ["registro_fecha", "fecha registro"],
-      (key) => key.includes("fecha"),
-    );
-    const productKey = this.resolveFieldKey(["Producto"], (key) =>
-      key.includes("producto"),
-    );
-    const quantityKey = this.resolveFieldKey(
-      ["cantidad", "cantidad vendida", "unidades", "qty"],
-      (key) =>
-        key.includes("cantidad") || key.includes("unidad") || key === "qty",
-    );
-    const totalKey = this.resolveFieldKey(
-      [
-        "Total orden",
-        "total_orden",
-        "total orden ($)",
-        "monto",
-        "subtotal",
-        "importe",
-      ],
-      (key) =>
-        key.includes("total") ||
-        key.includes("monto") ||
-        key.includes("importe") ||
-        key.includes("subtotal"),
-    );
-
-    return { dateKey, productKey, quantityKey, totalKey };
   }
 
   parseNumber(value) {
@@ -173,10 +168,11 @@ class SalesChartView extends BaseComponent {
     const yearSelect = document.getElementById("sales-chart-year");
     const allYearToggle = document.getElementById("sales-chart-all-year");
     const month = Number(monthSelect?.value ?? 0);
-    const year = Number(yearSelect?.value ?? 2026);
+    const currentYear = new Date().getFullYear();
+    const year = Number(yearSelect?.value ?? currentYear);
     return {
       month: Number.isNaN(month) ? 0 : month,
-      year: Number.isNaN(year) ? 2026 : year,
+      year: Number.isNaN(year) ? currentYear : year,
       allYear: Boolean(allYearToggle?.checked),
     };
   }
@@ -191,7 +187,10 @@ class SalesChartView extends BaseComponent {
       if (element) element.textContent = value;
     };
 
-    setText('[data-summary="total-amount"]', formatPrice(summary.totalAmount));
+    setText(
+      '[data-summary="total-amount"]',
+      `$${formatPrice(summary.totalAmount)}`,
+    );
     setText(
       '[data-summary="total-units"]',
       `${summary.totalUnits} unidades vendidas`,
@@ -202,7 +201,7 @@ class SalesChartView extends BaseComponent {
     );
     setText(
       '[data-summary="queque-amount"]',
-      formatPrice(summary.queque.amount),
+      `$${formatPrice(summary.queque.amount)}`,
     );
     setText(
       '[data-summary="galleta-units"]',
@@ -210,7 +209,7 @@ class SalesChartView extends BaseComponent {
     );
     setText(
       '[data-summary="galleta-amount"]',
-      formatPrice(summary.galleta.amount),
+      `$${formatPrice(summary.galleta.amount)}`,
     );
 
     const periodLabel = this.qs("#sales-chart-period-label");
@@ -220,8 +219,7 @@ class SalesChartView extends BaseComponent {
   }
 
   buildMonthlyRanking() {
-    const { dateKey, totalKey } = this.resolveDatasetKeys();
-    if (!dateKey || !totalKey || this.rawData.length === 0) {
+    if (this.orders.length === 0) {
       return [];
     }
 
@@ -229,10 +227,10 @@ class SalesChartView extends BaseComponent {
     const monthNames = this.getMonthNames();
     const totals = Array(12).fill(0);
 
-    this.rawData.forEach((row) => {
-      const date = this.parseDate(row[dateKey]);
+    this.orders.forEach((order) => {
+      const date = this.parseDate(order.fecha_registro);
       if (!date || date.getFullYear() !== targetYear) return;
-      totals[date.getMonth()] += this.parseNumber(row[totalKey]);
+      totals[date.getMonth()] += this.parseNumber(order.total);
     });
 
     return monthNames
@@ -247,15 +245,13 @@ class SalesChartView extends BaseComponent {
     list.innerHTML = "";
     ranking.forEach((entry, index) => {
       const item = document.createElement("li");
-      item.textContent = `${index + 1}. ${entry.name}: ${formatPrice(entry.amount)}`;
+      item.textContent = `${index + 1}. ${entry.name}: $${formatPrice(entry.amount)}`;
       list.appendChild(item);
     });
   }
 
   buildSeries() {
-    const { dateKey, productKey, quantityKey, totalKey } =
-      this.resolveDatasetKeys();
-    if (!dateKey || !productKey || this.rawData.length === 0) {
+    if (this.orders.length === 0) {
       return null;
     }
 
@@ -283,16 +279,29 @@ class SalesChartView extends BaseComponent {
         : this.getPeriodLabel(targetMonth, targetYear),
     };
 
-    this.rawData.forEach((row) => {
-      const date = this.parseDate(row[dateKey]);
+    const selectedOrders = new Map();
+    this.orders.forEach((order) => {
+      const date = this.parseDate(order.fecha_registro);
       if (!date) return;
-
-      const product = this.normalizeKey(row[productKey]);
-      const amount = this.parseNumber(row[totalKey]);
-      const units = quantityKey ? this.parseNumber(row[quantityKey]) : 1;
-
       if (date.getFullYear() !== targetYear) return;
       if (!allYear && date.getMonth() !== targetMonth) return;
+
+      selectedOrders.set(String(order.id), date);
+      summary.totalAmount += this.parseNumber(order.total);
+    });
+
+    const productNames = new Map(
+      this.products.map((product) => [String(product.id), product.nombre]),
+    );
+    this.details.forEach((detail) => {
+      const date = selectedOrders.get(String(detail.id_orden));
+      if (!date) return;
+
+      const product = this.normalizeKey(
+        productNames.get(String(detail.id_producto)) || "",
+      );
+      const units = this.parseNumber(detail.cantidad);
+      const amount = units * this.parseNumber(detail.precio_unitario);
 
       const index = allYear ? date.getMonth() : date.getDate() - 1;
       if (index < 0 || index >= labels.length) return;
@@ -307,7 +316,6 @@ class SalesChartView extends BaseComponent {
         summary.galleta.amount += amount;
       }
       summary.totalUnits += units;
-      summary.totalAmount += amount;
     });
 
     this.updateSummary(summary);
@@ -395,7 +403,7 @@ class SalesChartView extends BaseComponent {
           tooltip: {
             callbacks: {
               label(context) {
-                return `${context.dataset.label}: ${formatPrice(context.parsed.y || 0)}`;
+                return `${context.dataset.label}: ${context.parsed.y || 0} unidades`;
               },
             },
           },
@@ -413,7 +421,7 @@ class SalesChartView extends BaseComponent {
             },
             ticks: {
               callback(value) {
-                return formatPrice(value);
+                return value;
               },
             },
           },

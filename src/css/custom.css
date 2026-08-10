@@ -58,8 +58,19 @@ nav {
 #table-editor {
   display: flex;
   flex-direction: column;
-  height: 700px;
+  min-width: 0;
   border-radius: 10px;
+}
+
+#admin-workspace,
+#table-view,
+#chart-view,
+#frequency-view,
+#table-container,
+data-table {
+  min-width: 0;
+  max-width: 100%;
+  max-height: 600px;
 }
 
 #table-view {
@@ -74,13 +85,16 @@ nav {
 }
 
 #chart-view {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 #chart-view[hidden] {
+  display: none;
+}
+
+#frequency-view[hidden] {
   display: none;
 }
 
@@ -115,11 +129,31 @@ nav {
 
 #table-editor #view-toggle {
   display: flex;
-  gap: 0.5rem;
+  gap: 0;
   flex-shrink: 0;
-  align-self: center;
+  align-self: stretch;
   order: -1;
-  width: fit-content;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--pico-muted-border-color);
+}
+
+#table-editor #view-toggle button {
+  flex: 1 0 auto;
+  width: auto;
+  margin: 0;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  color: var(--pico-muted-color);
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+
+#table-editor #view-toggle button[aria-selected="true"] {
+  color: var(--pico-primary);
+  border-bottom-color: var(--pico-primary);
 }
 
 #table-editor #table-controls {
@@ -200,10 +234,9 @@ nav {
 }
 
 sales-chart-view {
-  flex: 1;
-  min-height: 0;
   display: flex;
   align-items: stretch;
+  min-width: 0;
 }
 
 sales-chart-view[hidden] {
@@ -212,7 +245,7 @@ sales-chart-view[hidden] {
 
 .sales-chart-card {
   width: 100%;
-  height: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -233,9 +266,9 @@ sales-chart-view[hidden] {
 }
 
 .sales-chart-wrap {
-  flex: 1 1 auto;
   position: relative;
   min-height: 280px;
+  width: 100%;
 }
 
 .sales-chart-summary {
@@ -254,6 +287,147 @@ sales-chart-view[hidden] {
 @media (max-width: 900px) {
   .sales-chart-summary {
     grid-template-columns: 1fr;
+  }
+}
+
+#btn-export-csv {
+  align-self: flex-end;
+  width: auto;
+  margin-top: 1rem;
+}
+
+#toast-container {
+  position: fixed;
+  z-index: 1000;
+  right: 1rem;
+  bottom: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  width: min(360px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.app-toast {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  color: var(--pico-color);
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-left: 4px solid var(--pico-primary);
+  border-radius: var(--pico-border-radius);
+  box-shadow: var(--pico-box-shadow);
+}
+
+.app-toast[data-type="error"] {
+  border-left-color: var(--pico-del-color);
+}
+
+.app-toast-modal {
+  position: fixed;
+  z-index: 1;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(360px, calc(100vw - 2rem));
+}
+
+data-table tr.row-created-highlight > td {
+  animation: created-row-highlight 4s ease-out;
+}
+
+@keyframes created-row-highlight {
+  0%,
+  65% {
+    background: color-mix(in srgb, var(--pico-primary) 28%, transparent);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+customer-frequency-view {
+  display: block;
+  min-width: 0;
+}
+
+.frequency-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.frequency-filters label,
+.frequency-filters button {
+  margin-bottom: 0;
+}
+
+.frequency-clear {
+  width: auto;
+}
+
+.frequency-chart-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  margin: 1rem 0;
+}
+
+.frequency-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.frequency-empty {
+  padding: 1rem;
+  border: 1px dashed var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+}
+
+@media (max-width: 900px) {
+  .frequency-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  #table-toolbar {
+    flex-wrap: wrap;
+  }
+
+  #table-toolbar select {
+    flex-basis: 100%;
+    border-radius: 4px 4px 0 0;
+  }
+
+  #table-view #table-toolbar #table-controls-top,
+  #table-editor #table-controls-top action-menu {
+    width: 100%;
+  }
+
+  #table-editor #table-controls-top action-menu button {
+    flex: 1;
+    width: auto;
+  }
+
+  #sales-chart-controls label {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .frequency-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .frequency-clear,
+  #btn-export-csv {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  data-table tr.row-created-highlight > td {
+    animation: none;
+    background: color-mix(in srgb, var(--pico-primary) 20%, transparent);
   }
 }
 

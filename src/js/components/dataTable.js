@@ -32,8 +32,15 @@ class DataTable extends BaseComponent {
     return Array.from(this.selectedIds);
   }
 
-  isSalesView() {
-    return this.tableName === "vista_ventas";
+  getRowId(row, index) {
+    if (row.id !== null && row.id !== undefined) return row.id;
+    const rawRow = this.rawData[index] || {};
+    if (rawRow.id !== null && rawRow.id !== undefined) return rawRow.id;
+    return null;
+  }
+
+  isOrdersView() {
+    return this.tableName === "ordenes";
   }
 
   normalizeKey(key) {
@@ -54,15 +61,15 @@ class DataTable extends BaseComponent {
       .map((key) => ({ key, normalized: this.normalizeKey(key) }))
       .filter(({ normalized }) => normalized.includes("total"));
 
-    const prioritized = normalizedCandidates.find(({ normalized }) =>
-      normalized.includes("orden"),
+    const prioritized = normalizedCandidates.find(
+      ({ normalized }) => normalized === "total",
     );
 
     return (prioritized || normalizedCandidates[0] || {}).key || null;
   }
 
   getSalesTotal() {
-    if (!this.isSalesView()) {
+    if (!this.isOrdersView()) {
       return 0;
     }
 
@@ -97,23 +104,28 @@ class DataTable extends BaseComponent {
           </thead>
           <tbody>
             ${this.data
-              .map(
-                (row, idx) => `
-              <tr>
+              .map((row, idx) => {
+                const rowId = this.getRowId(row, idx);
+                return `
+              <tr${rowId === null ? "" : ` data-row-id="${escapeHTML(rowId)}"`}>
                 <td>
-                  <input type="checkbox" class="row-checkbox" data-id="${escapeHTML(row.id ?? idx)}" aria-label="Seleccionar fila" />
+                  ${
+                    rowId === null
+                      ? ""
+                      : `<input type="checkbox" class="row-checkbox" data-id="${escapeHTML(rowId)}" aria-label="Seleccionar fila" />`
+                  }
                 </td>
                 ${headers.map((h) => `<td>${escapeHTML(row[h] ?? "")}</td>`).join("")}
               </tr>
-            `,
-              )
+            `;
+              })
               .join("")}
           </tbody>
         </table>
       </div>
       <div class="table-footer">
         ${
-          this.isSalesView()
+          this.isOrdersView()
             ? `<div class="table-footer-row table-sales-summary" aria-live="polite">
                 <span>Total ventas del periodo</span>
                 <strong class="sales-total-value">$${escapeHTML(this.getSalesTotal())}</strong>
@@ -154,6 +166,7 @@ class DataTable extends BaseComponent {
         });
         this.emitSelection();
         this.updateFooter();
+        this.updateSelectAllState();
       });
     }
 
@@ -162,8 +175,22 @@ class DataTable extends BaseComponent {
         this.toggleSelection(cb.dataset.id, e.target.checked);
         this.emitSelection();
         this.updateFooter();
+        this.updateSelectAllState();
       });
     });
+  }
+
+  updateSelectAllState() {
+    const selectAll = this.qs("#select-all");
+    const checkboxes = Array.from(this.qsa(".row-checkbox"));
+    if (!selectAll) return;
+    const checkedCount = checkboxes.filter((checkbox) => checkbox.checked).length;
+    selectAll.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+    selectAll.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+    selectAll.setAttribute(
+      "aria-checked",
+      selectAll.indeterminate ? "mixed" : String(selectAll.checked),
+    );
   }
 
   toggleSelection(id, checked) {
@@ -172,6 +199,30 @@ class DataTable extends BaseComponent {
     } else {
       this.selectedIds.delete(id);
     }
+  }
+
+  selectAndReveal(id) {
+    const normalizedId = String(id);
+    const row = Array.from(this.qsa("tbody tr")).find(
+      (candidate) => candidate.dataset.rowId === normalizedId,
+    );
+    if (!row) return false;
+
+    this.selectedIds.clear();
+    this.qsa(".row-checkbox").forEach((checkbox) => {
+      checkbox.checked = checkbox.dataset.id === normalizedId;
+    });
+    this.selectedIds.add(normalizedId);
+    this.emitSelection();
+    this.updateFooter();
+    this.updateSelectAllState();
+
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.remove("row-created-highlight");
+    void row.offsetWidth;
+    row.classList.add("row-created-highlight");
+    window.setTimeout(() => row.classList.remove("row-created-highlight"), 4000);
+    return true;
   }
 
   emitSelection() {

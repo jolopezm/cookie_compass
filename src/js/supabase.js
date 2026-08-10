@@ -9,6 +9,13 @@ const DEFAULT_TABLES = [
   "vista_ventas",
 ];
 const ALLOWED_TABLES = new Set(DEFAULT_TABLES);
+const TABLE_ORDER = {
+  clientes: ["fecha_registro", "id"],
+  productos: ["fecha_registro", "id"],
+  ordenes: ["fecha_registro", "id"],
+  detalle_ordenes: ["fecha_registro", "id"],
+  vista_ventas: ["fecha_registro", "orden_id"],
+};
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
@@ -53,9 +60,12 @@ function onAuthChange(callback) {
 async function fetchRecords(tableName) {
   assertAllowedTable(tableName);
 
-  const { data: fetchedRecords, error } = await supabaseClient
-    .from(tableName)
-    .select("*");
+  let query = supabaseClient.from(tableName).select("*");
+  TABLE_ORDER[tableName].forEach((column) => {
+    query = query.order(column, { ascending: false });
+  });
+
+  const { data: fetchedRecords, error } = await query;
 
   if (error) {
     throw error;
