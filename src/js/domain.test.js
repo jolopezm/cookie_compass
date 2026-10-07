@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildDeliveryPlan,
+  filterCurrentSaleDetails,
   median,
   percentChange,
   summarizeMonth,
@@ -46,6 +47,29 @@ test("delivery planning ranks overdue customers first", () => {
   assert.equal(result.deliveries[0].overdueDays, 8);
 });
 
+test("delivery planning ignores annulled sales but keeps confirmed and legacy history", () => {
+  const result = buildDeliveryPlan({
+    now: new Date("2026-10-05T12:00:00"),
+    customers: [{ id: 1, nombre: "Almacén" }],
+    products: [{ id: 10, nombre: "Queque" }],
+    orders: [
+      { id: 1, id_cliente: 1, fecha_registro: "2026-09-01T12:00:00" },
+      { id: 2, id_cliente: 1, fecha_registro: "2026-09-08T12:00:00", estado: "confirmada" },
+      { id: 3, id_cliente: 1, fecha_registro: "2026-09-29T12:00:00", estado: "anulada" },
+    ],
+    details: [
+      { id_orden: 1, id_producto: 10, cantidad: 2 },
+      { id_orden: 2, id_producto: 10, cantidad: 4 },
+      { id_orden: 3, id_producto: 10, cantidad: 100 },
+    ],
+  });
+
+  assert.equal(result.deliveries[0].cadence, 7);
+  assert.equal(result.deliveries[0].lastDelivery.getTime(), new Date(2026, 8, 8).getTime());
+  assert.deepEqual(result.deliveries[0].basket.map((item) => item.cantidad), [3]);
+  assert.deepEqual(result.production.map((item) => item.quantity), [3]);
+});
+
 test("monthly summary separates withdrawals from operating expenses", () => {
   const summary = summarizeMonth(
     [{ id: 1, total: 100_000, fecha_registro: "2026-10-02T12:00:00" }],
@@ -63,15 +87,53 @@ test("monthly summary separates withdrawals from operating expenses", () => {
   assert.equal(percentChange(120, 100), 20);
 });
 
+test("monthly summary ignores annulled sales and counts confirmed or legacy states", () => {
+  const summary = summarizeMonth(
+    [
+      { id: 1, total: 10_000, fecha_registro: "2026-10-01T12:00:00" },
+      { id: 2, total: 20_000, fecha_registro: "2026-10-02T12:00:00", estado: "confirmada" },
+      { id: 3, total: 40_000, fecha_registro: "2026-10-03T12:00:00", estado: "migrada" },
+      { id: 4, total: 80_000, fecha_registro: "2026-10-04T12:00:00", estado: "anulada" },
+    ],
+    [],
+    new Date("2026-10-06T12:00:00"),
+  );
+
+  assert.equal(summary.revenue, 70_000);
+  assert.equal(summary.cashBalance, 70_000);
+  assert.equal(summary.operatingResult, 70_000);
+  assert.equal(summary.sales, 3);
+});
+
+test("sale details require an existing non-annulled parent order", () => {
+  const details = filterCurrentSaleDetails(
+    [
+      { id: 1, estado: "confirmada" },
+      { id: 2, estado: "anulada" },
+      { id: 3 },
+    ],
+    [
+      { id: 10, id_orden: 1 },
+      { id: 20, id_orden: 2 },
+      { id: 30, id_orden: 3 },
+      { id: 40, id_orden: 999 },
+    ],
+  );
+
+  assert.deepEqual(details.map((detail) => detail.id), [10, 30]);
+});
+
 test("product sales include only details from orders in the selected month", () => {
   const orders = [
     { id: 10, fecha_registro: "2026-01-02T12:00:00" },
     { id: 11, fecha_registro: "2025-12-30T12:00:00" },
+    { id: 12, fecha_registro: "2026-01-03T12:00:00", estado: "anulada" },
   ];
   const details = [
     { id_orden: 10, id_producto: 2, cantidad: 2, precio_unitario: 1_500 },
     { id_orden: "10", id_producto: 1, cantidad: 1, precio_unitario: 4_000 },
     { id_orden: 11, id_producto: 1, cantidad: 20, precio_unitario: 4_000 },
+    { id_orden: 12, id_producto: 1, cantidad: 50, precio_unitario: 4_000 },
   ];
   const products = [
     { id: 1, nombre: "Torta" },

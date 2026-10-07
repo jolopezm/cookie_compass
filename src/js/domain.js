@@ -43,6 +43,17 @@ function getNextMonday(now) {
   return addDays(today, distance);
 }
 
+function isCurrentSale(order) {
+  return order.estado !== "anulada";
+}
+
+function filterCurrentSaleDetails(orders, details) {
+  const currentOrderIds = new Set(
+    orders.filter(isCurrentSale).map((order) => String(order.id)),
+  );
+  return details.filter((detail) => currentOrderIds.has(String(detail.id_orden)));
+}
+
 function buildHistoricalBasket(customerOrders, details) {
   const recentOrders = customerOrders.slice(-4);
   const orderIds = new Set(recentOrders.map((order) => String(order.id)));
@@ -72,7 +83,7 @@ function buildDeliveryPlan({
   const productNames = new Map(products.map((product) => [String(product.id), product.nombre]));
   const ordersByCustomer = new Map();
 
-  orders.forEach((order) => {
+  orders.filter(isCurrentSale).forEach((order) => {
     const key = String(order.id_cliente);
     if (!ordersByCustomer.has(key)) ordersByCustomer.set(key, []);
     ordersByCustomer.get(key).push(order);
@@ -161,6 +172,7 @@ function getPeriodBounds(now = new Date(), monthOffset = 0) {
 function summarizeMonth(orders = [], expenses = [], now = new Date(), monthOffset = 0) {
   const { from, to } = getPeriodBounds(now, monthOffset);
   const periodOrders = orders.filter((order) => {
+    if (!isCurrentSale(order)) return false;
     const date = new Date(order.fecha_registro);
     return date >= from && date < to;
   });
@@ -197,7 +209,7 @@ function summarizeProductSales(
     orders
       .filter((order) => {
         const date = new Date(order.fecha_registro);
-        return date >= from && date < to;
+        return isCurrentSale(order) && date >= from && date < to;
       })
       .map((order) => String(order.id)),
   );
@@ -232,6 +244,7 @@ export {
   addDays,
   buildDeliveryPlan,
   daysBetween,
+  filterCurrentSaleDetails,
   getNextMonday,
   median,
   percentChange,
