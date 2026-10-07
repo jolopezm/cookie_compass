@@ -1,4 +1,5 @@
 import { supabase } from "./supabase.js";
+import { filterCurrentSaleDetails } from "./domain.js";
 
 const CORE_TABLES = {
   customers: ["clientes", "fecha_registro"],
@@ -60,6 +61,7 @@ async function fetchAppData() {
     }),
   );
 
+  data.details = filterCurrentSaleDetails(data.orders, data.details);
   return { ...data, ...Object.fromEntries(optionalEntries), schemaReady };
 }
 
@@ -101,6 +103,23 @@ async function createSale({ customerId, date, lines }) {
     p_id_cliente: customerId,
     p_fecha: date,
     p_detalles: lines,
+  });
+  if (error) throw error;
+  return data;
+}
+
+async function annulSale(orderId, reason) {
+  const { data, error } = await supabase.rpc("anular_venta", {
+    p_id_orden: orderId,
+    p_motivo: reason,
+  });
+  if (error) throw error;
+  return data;
+}
+
+async function restoreSale(orderId) {
+  const { data, error } = await supabase.rpc("restaurar_venta", {
+    p_id_orden: orderId,
   });
   if (error) throw error;
   return data;
@@ -156,6 +175,7 @@ async function saveRecipe({ productId, yieldQuantity, name, notes, lines }) {
 
 export {
   adjustInventory,
+  annulSale,
   createExpense,
   createRecord,
   createSale,
@@ -163,6 +183,7 @@ export {
   fetchAppData,
   recordProduction,
   recordPurchase,
+  restoreSale,
   saveRecipe,
   signIn,
   signOut,
