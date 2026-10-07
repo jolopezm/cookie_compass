@@ -44,6 +44,7 @@ const ICONS = {
   check: "m5 12 4 4L19 6",
   edit: "m14 5 5 5M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10z",
   trash: "M4 7h16m-10 4v6m4-6v6M9 4h6l1 3H8zm-3 3 1 14h10l1-14",
+  refresh: "M20 6v5h-5M4 18v-5h5m10.5-2a8 8 0 0 0-13.8-3L4 11m16 2-1.7 3a8 8 0 0 1-13.8-2",
 };
 
 function Icon({ name, size = 22 }) {
@@ -371,7 +372,7 @@ function DataScreen({ data, mutate, notify }) {
           const material = data.materials.find((item) => String(item.id) === String(row.id_materia_prima));
           let primary = row.nombre || customer?.nombre || product?.nombre || material?.nombre || `Registro ${row.id}`;
           let secondary = "";
-          if (tab === "customers") secondary = `${row.frecuencia_compra_dias || "~7"} días entre entregas`;
+          if (tab === "customers") secondary = row.frecuencia_compra_dias ? `${row.frecuencia_compra_dias} días entre entregas` : "Frecuencia sin configurar";
           if (tab === "products") secondary = currency(row.precio);
           if (tab === "sales") secondary = `${shortDate(row.fecha_registro)} · ${currency(row.total)}`;
           if (tab === "expenses") { primary = row.descripcion || row.proveedor || row.tipo; secondary = `${shortDate(row.fecha)} · ${currency(row.total)}`; }
@@ -493,9 +494,17 @@ function App() {
   }, []);
 
   async function loadData() {
-    if (!session) return;
+    if (!session) return false;
     setLoading(true);
-    try { setData(await fetchAppData()); } catch (error) { notify(error.message, "error"); } finally { setLoading(false); }
+    try {
+      setData(await fetchAppData());
+      return true;
+    } catch (error) {
+      notify(error.message, "error");
+      return false;
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { loadData(); }, [session]);
@@ -510,6 +519,11 @@ function App() {
     await loadData();
   }
 
+  async function handleManualRefresh() {
+    if (loading) return;
+    if (await loadData()) notify("Datos actualizados");
+  }
+
   if (authLoading) return <div className="app-loader"><div className="brand-mark">CC</div><span>Cargando Cookie Compass</span></div>;
   if (!session) return <LoginScreen />;
 
@@ -522,7 +536,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="app-header"><button className="wordmark" onClick={() => setScreen("home")}><span>CC</span><strong>Cookie Compass</strong></button><button className="profile-button" aria-label="Configuración del perfil" onClick={() => { setPreviousScreen(screen === "settings" ? "home" : screen); setScreen("settings"); }}><Icon name="user" /></button></header>
+      <header className="app-header"><button className="wordmark" onClick={() => setScreen("home")}><span>CC</span><strong>Cookie Compass</strong></button><div className="header-actions"><button className="refresh-button" aria-label={loading ? "Actualizando datos" : "Actualizar datos"} aria-busy={loading} title={loading ? "Actualizando datos" : "Actualizar datos"} onClick={handleManualRefresh} disabled={loading}><Icon name="refresh" /></button><button className="profile-button" aria-label="Configuración del perfil" onClick={() => { setPreviousScreen(screen === "settings" ? "home" : screen); setScreen("settings"); }}><Icon name="user" /></button></div></header>
       {loading && <div className="loading-line" />}
       <main className="app-content">{content}</main>
       {screen !== "settings" && <nav className="bottom-nav" aria-label="Navegación principal">{NAV_ITEMS.slice(0, 2).map(([key, label, icon]) => <button key={key} aria-current={screen === key ? "page" : undefined} className={screen === key ? "active" : ""} onClick={() => setScreen(key)}><Icon name={icon} /><span>{label}</span></button>)}<button className="add-button" onClick={() => setShowAdd(true)} aria-label="Registrar movimiento"><Icon name="plus" size={30} /></button>{NAV_ITEMS.slice(2).map(([key, label, icon]) => <button key={key} aria-current={screen === key ? "page" : undefined} className={screen === key ? "active" : ""} onClick={() => setScreen(key)}><Icon name={icon} /><span>{label}</span></button>)}</nav>}
