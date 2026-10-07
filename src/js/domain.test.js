@@ -23,6 +23,24 @@ test("delivery planning honors configured cadence, day and basket", () => {
   assert.deepEqual(result.production.map((item) => item.quantity), [12]);
 });
 
+test("delivery planning excludes inactive customers from deliveries and production", () => {
+  const result = buildDeliveryPlan({
+    now: new Date("2026-10-05T12:00:00"),
+    customers: [
+      { id: 1, nombre: "Activo", activo: true },
+      { id: 2, nombre: "Pausado", activo: false },
+    ],
+    products: [{ id: 10, nombre: "Queque" }],
+    plans: [
+      { id_cliente: 1, id_producto: 10, cantidad: 5, activo: true },
+      { id_cliente: 2, id_producto: 10, cantidad: 12, activo: true },
+    ],
+  });
+
+  assert.deepEqual(result.deliveries.map((delivery) => delivery.id), [1]);
+  assert.deepEqual(result.production.map((item) => item.quantity), [5]);
+});
+
 test("delivery planning ranks overdue customers first", () => {
   const result = buildDeliveryPlan({
     now: new Date("2026-10-05T12:00:00"),

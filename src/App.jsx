@@ -349,6 +349,14 @@ function DataScreen({ data, mutate, notify }) {
     try { await mutate(() => deleteRecord(table, row.id)); notify("Registro eliminado"); } catch (error) { notify(error.message, "error"); }
   }
 
+  async function toggleCustomerStatus(customer) {
+    const isActive = customer.activo !== false;
+    try {
+      await mutate(() => updateRecord("clientes", customer.id, { activo: !isActive }));
+      notify(isActive ? "Cliente pausado" : "Cliente reactivado");
+    } catch (error) { notify(error.message, "error"); }
+  }
+
   return (
     <div className="screen">
       {!data.schemaReady && <SchemaNotice />}
@@ -369,6 +377,7 @@ function DataScreen({ data, mutate, notify }) {
           const customer = data.customers.find((item) => String(item.id) === String(row.id_cliente));
           const product = data.products.find((item) => String(item.id) === String(row.id_producto));
           const material = data.materials.find((item) => String(item.id) === String(row.id_materia_prima));
+          const customerActive = row.activo !== false;
           let primary = row.nombre || customer?.nombre || product?.nombre || material?.nombre || `Registro ${row.id}`;
           let secondary = "";
           if (tab === "customers") secondary = `${row.frecuencia_compra_dias || "~7"} días entre entregas`;
@@ -381,7 +390,18 @@ function DataScreen({ data, mutate, notify }) {
           if (tab === "materials") secondary = `${row.stock_minimo} ${row.unidad_base} mínimo`;
           if (tab === "recipes") { primary = row.nombre; secondary = `${product?.nombre || "Producto"} · rinde ${row.rendimiento}`; }
           if (tab === "plans") { primary = `${customer?.nombre || "Cliente"} · ${product?.nombre || "Producto"}`; secondary = `${row.cantidad} unidades por entrega`; }
-          return <article key={row.id}><div><strong>{primary}</strong><span>{secondary}</span></div>{manageableTabs.has(tab) && <div className="row-actions"><button aria-label="Editar" onClick={() => editRow(row)}><Icon name="edit" size={18} /></button><button aria-label="Eliminar" onClick={() => removeRow(row)}><Icon name="trash" size={18} /></button></div>}</article>;
+          return <article key={row.id}>
+            <div>
+              <strong>{primary}</strong>
+              <span>{secondary}</span>
+              {tab === "customers" && <span className={`customer-status ${customerActive ? "active" : "paused"}`}>Estado: {customerActive ? "Activo" : "Pausado"}</span>}
+            </div>
+            {manageableTabs.has(tab) && <div className="row-actions">
+              {tab === "customers" && <button className="status-action" aria-label={`${customerActive ? "Pausar" : "Reactivar"} a ${row.nombre}. Estado actual: ${customerActive ? "activo" : "pausado"}`} onClick={() => toggleCustomerStatus(row)}>{customerActive ? "Pausar" : "Reactivar"}</button>}
+              <button aria-label="Editar" onClick={() => editRow(row)}><Icon name="edit" size={18} /></button>
+              <button aria-label="Eliminar" onClick={() => removeRow(row)}><Icon name="trash" size={18} /></button>
+            </div>}
+          </article>;
         })}
         {!filtered.length && <div className="empty-state">No hay registros para mostrar.</div>}
       </div>
