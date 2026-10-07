@@ -6,6 +6,7 @@ import {
   median,
   percentChange,
   summarizeMonth,
+  summarizeProductSales,
 } from "./domain.js";
 
 test("median handles odd and even collections", () => {
@@ -120,4 +121,48 @@ test("sale details require an existing non-annulled parent order", () => {
   );
 
   assert.deepEqual(details.map((detail) => detail.id), [10, 30]);
+});
+
+test("product sales include only details from orders in the selected month", () => {
+  const orders = [
+    { id: 10, fecha_registro: "2026-01-02T12:00:00" },
+    { id: 11, fecha_registro: "2025-12-30T12:00:00" },
+    { id: 12, fecha_registro: "2026-01-03T12:00:00", estado: "anulada" },
+  ];
+  const details = [
+    { id_orden: 10, id_producto: 2, cantidad: 2, precio_unitario: 1_500 },
+    { id_orden: "10", id_producto: 1, cantidad: 1, precio_unitario: 4_000 },
+    { id_orden: 11, id_producto: 1, cantidad: 20, precio_unitario: 4_000 },
+    { id_orden: 12, id_producto: 1, cantidad: 50, precio_unitario: 4_000 },
+  ];
+  const products = [
+    { id: 1, nombre: "Torta" },
+    { id: 2, nombre: "Galleta" },
+  ];
+  const originalData = structuredClone({ orders, details, products });
+
+  const ranking = summarizeProductSales(
+    orders,
+    details,
+    products,
+    new Date("2025-12-15T12:00:00"),
+    1,
+  );
+
+  assert.deepEqual(ranking, [
+    { id: "1", name: "Torta", units: 1, amount: 4_000 },
+    { id: "2", name: "Galleta", units: 2, amount: 3_000 },
+  ]);
+  assert.deepEqual({ orders, details, products }, originalData);
+});
+
+test("product sales return an empty ranking when the selected month has no orders", () => {
+  const ranking = summarizeProductSales(
+    [{ id: 10, fecha_registro: "2026-01-02T12:00:00" }],
+    [{ id_orden: 10, id_producto: 1, cantidad: 1, precio_unitario: 4_000 }],
+    [{ id: 1, nombre: "Torta" }],
+    new Date("2026-02-15T12:00:00"),
+  );
+
+  assert.deepEqual(ranking, []);
 });

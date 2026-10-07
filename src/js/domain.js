@@ -197,6 +197,44 @@ function summarizeMonth(orders = [], expenses = [], now = new Date(), monthOffse
   };
 }
 
+function summarizeProductSales(
+  orders = [],
+  details = [],
+  products = [],
+  now = new Date(),
+  monthOffset = 0,
+) {
+  const { from, to } = getPeriodBounds(now, monthOffset);
+  const orderIds = new Set(
+    orders
+      .filter((order) => {
+        const date = new Date(order.fecha_registro);
+        return isCurrentSale(order) && date >= from && date < to;
+      })
+      .map((order) => String(order.id)),
+  );
+  const productNames = new Map(
+    products.map((product) => [String(product.id), product.nombre]),
+  );
+  const productSales = new Map();
+
+  details.forEach((detail) => {
+    if (!orderIds.has(String(detail.id_orden))) return;
+    const id = String(detail.id_producto);
+    const entry = productSales.get(id) || {
+      id,
+      name: productNames.get(id) || "Producto",
+      units: 0,
+      amount: 0,
+    };
+    entry.units += Number(detail.cantidad || 0);
+    entry.amount += Number(detail.cantidad || 0) * Number(detail.precio_unitario || 0);
+    productSales.set(id, entry);
+  });
+
+  return [...productSales.values()].sort((a, b) => b.amount - a.amount);
+}
+
 function percentChange(current, previous) {
   if (!previous) return current ? 100 : 0;
   return ((current - previous) / previous) * 100;
@@ -212,4 +250,5 @@ export {
   percentChange,
   startOfDay,
   summarizeMonth,
+  summarizeProductSales,
 };
