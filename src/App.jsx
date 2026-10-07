@@ -14,7 +14,12 @@ import {
   signOut,
   updateRecord,
 } from "./js/repository.js";
-import { buildDeliveryPlan, percentChange, summarizeMonth } from "./js/domain.js";
+import {
+  buildDeliveryPlan,
+  percentChange,
+  summarizeMonth,
+  summarizeProductSales,
+} from "./js/domain.js";
 
 const EMPTY_DATA = {
   customers: [], products: [], orders: [], details: [], plans: [], materials: [],
@@ -222,39 +227,39 @@ function BalanceScreen({ data }) {
 }
 
 function AnalyticsScreen({ data }) {
-  const current = summarizeMonth(data.orders, data.expenses);
-  const previous = summarizeMonth(data.orders, data.expenses, new Date(), -1);
-  const productSales = new Map();
-  const productNames = new Map(data.products.map((product) => [String(product.id), product.nombre]));
-  data.details.forEach((detail) => {
-    const key = String(detail.id_producto);
-    const entry = productSales.get(key) || { id: key, name: productNames.get(key) || "Producto", units: 0, amount: 0 };
-    entry.units += Number(detail.cantidad || 0);
-    entry.amount += Number(detail.cantidad || 0) * Number(detail.precio_unitario || 0);
-    productSales.set(key, entry);
-  });
-  const ranking = [...productSales.values()].sort((a, b) => b.amount - a.amount);
+  const currentMonth = dateKey().slice(0, 7);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const [year, month] = selectedMonth.split("-").map(Number);
+  const selectedDate = new Date(year, month - 1, 1);
+  const selected = summarizeMonth(data.orders, data.expenses, selectedDate);
+  const previous = summarizeMonth(data.orders, data.expenses, selectedDate, -1);
+  const ranking = summarizeProductSales(data.orders, data.details, data.products, selectedDate);
   const maxAmount = ranking[0]?.amount || 1;
+  const periodLabel = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric" }).format(selectedDate);
 
   return (
     <div className="screen">
-      <div className="page-title"><p className="eyebrow">Rendimiento</p><h1>Análisis</h1><p>Qué está creciendo y dónde se está yendo el dinero.</p></div>
+      <div className="analytics-header">
+        <div className="page-title"><p className="eyebrow">Rendimiento</p><h1>Análisis</h1><p>Resultados de {periodLabel}.</p></div>
+        <label className="period-selector">Mes y año<input type="month" value={selectedMonth} max={currentMonth} onChange={(event) => event.target.value && setSelectedMonth(event.target.value)} /></label>
+      </div>
       <section className="comparison-card">
-        <div><span>Ventas del mes</span><strong>{currency(current.revenue)}</strong></div>
-        <div className={`trend ${current.revenue >= previous.revenue ? "up" : "down"}`}>{percentChange(current.revenue, previous.revenue).toFixed(0)}%</div>
-        <div className="comparison-track"><span style={{ width: `${Math.min(100, previous.revenue ? (current.revenue / previous.revenue) * 60 : 100)}%` }} /></div>
+        <div><span>Ventas de {periodLabel}</span><strong>{currency(selected.revenue)}</strong></div>
+        <div className={`trend ${selected.revenue >= previous.revenue ? "up" : "down"}`}>{percentChange(selected.revenue, previous.revenue).toFixed(0)}%</div>
+        <div className="comparison-track"><span style={{ width: `${Math.min(100, previous.revenue ? (selected.revenue / previous.revenue) * 60 : 100)}%` }} /></div>
         <small>Mes anterior: {currency(previous.revenue)}</small>
       </section>
       <div className="stats-grid compact">
-        <StatCard label="Ventas" value={current.sales} note="Órdenes únicas" />
-        <StatCard label="Ticket promedio" value={currency(current.sales ? current.revenue / current.sales : 0)} />
+        <StatCard label="Ventas" value={selected.sales} note="Órdenes únicas" />
+        <StatCard label="Ticket promedio" value={currency(selected.sales ? selected.revenue / selected.sales : 0)} />
       </div>
       <section>
-        <div className="section-heading"><div><p className="eyebrow">Acumulado</p><h2>Productos que más venden</h2></div></div>
+        <div className="section-heading"><div><p className="eyebrow">{periodLabel}</p><h2>Productos que más venden</h2></div></div>
         <div className="ranking-card">
           {ranking.map((item, index) => (
             <div className="rank-row" key={item.id}><span className="rank-number">{String(index + 1).padStart(2, "0")}</span><div><strong>{item.name}</strong><div className="rank-track"><span style={{ width: `${(item.amount / maxAmount) * 100}%` }} /></div><small>{item.units.toLocaleString("es-CL")} unidades</small></div><b>{currency(item.amount)}</b></div>
           ))}
+          {!ranking.length && <div className="empty-state">No hay ventas de productos registradas en este mes.</div>}
         </div>
       </section>
       {data.costs.length > 0 && <section><div className="section-heading"><div><p className="eyebrow">Recetas</p><h2>Costo y margen unitario</h2></div></div><div className="cost-grid">{data.costs.map((cost) => { const product = data.products.find((item) => String(item.id) === String(cost.id_producto)); const margin = Number(product?.precio || 0) - Number(cost.costo_unitario || 0); return <article key={cost.id_producto}><span>{cost.producto}</span><strong>{cost.costo_unitario == null ? "Costo incompleto" : currency(cost.costo_unitario)}</strong><small>Margen: {currency(margin)}</small></article>; })}</div></section>}
